@@ -1,0 +1,119 @@
+ outp | addr | data
+
+ --:- |    0 |             ; result:
+ --:- |    8 |             ; partial_product:
+ --:- |   10 |             ; value:
+  0:0 | 8000 |             ; start:
+  0:0 | 8000 | 68 ff       ; mov # 0xFF, sp
+  2:0 | 8002 | 08 32       ; mov # FAC_TO_COMPUTE, a
+  4:0 | 8004 | 28 10       ; mov a, value
+  6:0 | 8006 | 0c 16 80    ; jsr factorial
+  9:0 | 8009 | 48 07       ; mov # 0x07, x
+  b:0 | 800b |             ; .output_loop:
+  b:0 | 800b | 76 00       ; out (0x00, x)
+  d:0 | 800d | 13          ; mov x, a
+  e:0 | 800e | 03 24 fe    ; sub # 0x01, a
+ 11:0 | 8011 | 12          ; mov a, x
+ 12:0 | 8012 | 2c 0b 80    ; jc .output_loop
+ 15:0 | 8015 |             ; .halt:
+ 15:0 | 8015 | 01          ; hlt
+ 16:0 | 8016 |             ; factorial:
+ 16:0 | 8016 | 08 00       ; mov # 0x00, a
+ 18:0 | 8018 | 48 0f       ; mov # (partial_product + 7), x
+ 1a:0 | 801a |             ; .reset_loop:
+ 1a:0 | 801a | 1a 00       ; mov a, (0x00, x)
+ 1c:0 | 801c | 52          ; swap a, x
+ 1d:0 | 801d | 03 24 fe    ; sub # 0x01, a
+ 20:0 | 8020 | 52          ; swap a, x
+ 21:0 | 8021 | 2c 1a 80    ; jc .reset_loop
+ 24:0 | 8024 | 18 10       ; mov value, a
+ 26:0 | 8026 | 28 08       ; mov a, partial_product
+ 28:0 | 8028 | 03 24 fe    ; sub # 0x01, a
+ 2b:0 | 802b | 3c d4 80    ; jnc .return_one
+ 2e:0 | 802e | 4c d4 80    ; jz .return_one
+ 31:0 | 8031 | 03 44 01    ; cmp # 0x01, a
+ 34:0 | 8034 | 4c d9 80    ; jz .return_two
+ 37:0 | 8037 | 28 10       ; mov a, value
+ 39:0 | 8039 |             ; .factorial_loop:
+ 39:0 | 8039 | 38 01       ; mov # 0b1, b
+ 3b:0 | 803b |             ; ..multiplication_loop:
+ 3b:0 | 803b | 18 10       ; mov value, a
+ 3d:0 | 803d | 63          ; and b, a
+ 3e:0 | 803e | 22          ; mov b, x
+ 3f:0 | 803f | 4c 73 80    ; jz ...skip_add
+ 42:0 | 8042 | 18 00       ; mov result, a
+ 44:0 | 8044 | 02 04 08    ; add partial_product, a
+ 47:0 | 8047 | 28 00       ; mov a, result
+ 49:0 | 8049 | 18 01       ; mov (result + 1), a
+ 4b:0 | 804b | 04 09       ; addc (partial_product + 1), a
+ 4d:0 | 804d | 28 01       ; mov a, (result + 1)
+ 4f:0 | 804f | 18 02       ; mov (result + 2), a
+ 51:0 | 8051 | 04 0a       ; addc (partial_product + 2), a
+ 53:0 | 8053 | 28 02       ; mov a, (result + 2)
+ 55:0 | 8055 | 18 03       ; mov (result + 3), a
+ 57:0 | 8057 | 04 0b       ; addc (partial_product + 3), a
+ 59:0 | 8059 | 28 03       ; mov a, (result + 3)
+ 5b:0 | 805b | 18 04       ; mov (result + 4), a
+ 5d:0 | 805d | 04 0c       ; addc (partial_product + 4), a
+ 5f:0 | 805f | 28 04       ; mov a, (result + 4)
+ 61:0 | 8061 | 18 05       ; mov (result + 5), a
+ 63:0 | 8063 | 04 0d       ; addc (partial_product + 5), a
+ 65:0 | 8065 | 28 05       ; mov a, (result + 5)
+ 67:0 | 8067 | 18 06       ; mov (result + 6), a
+ 69:0 | 8069 | 04 0e       ; addc (partial_product + 6), a
+ 6b:0 | 806b | 28 06       ; mov a, (result + 6)
+ 6d:0 | 806d | 18 07       ; mov (result + 7), a
+ 6f:0 | 806f | 04 0f       ; addc (partial_product + 7), a
+ 71:0 | 8071 | 28 07       ; mov a, (result + 7)
+ 73:0 | 8073 |             ; ...skip_add:
+ 73:0 | 8073 | 02 05 08 00 ; rol partial_product, 0
+ 77:0 | 8077 | 05 09 00    ; rolc (partial_product + 1)
+ 7a:0 | 807a | 05 0a 00    ; rolc (partial_product + 2)
+ 7d:0 | 807d | 05 0b 00    ; rolc (partial_product + 3)
+ 80:0 | 8080 | 05 0c 00    ; rolc (partial_product + 4)
+ 83:0 | 8083 | 05 0d 00    ; rolc (partial_product + 5)
+ 86:0 | 8086 | 05 0e 00    ; rolc (partial_product + 6)
+ 89:0 | 8089 | 05 0f 00    ; rolc (partial_product + 7)
+ 8c:0 | 808c | 23          ; mov x, b
+ 8d:0 | 808d | 02 0f       ; rol b, 0
+ 8f:0 | 808f | 5c 3b 80    ; jnz ..multiplication_loop
+ 92:0 | 8092 | 18 10       ; mov value, a
+ 94:0 | 8094 | 03 24 fe    ; sub # 0x01, a
+ 97:0 | 8097 | 03 44 01    ; cmp # 0x01, a
+ 9a:0 | 809a | 4c dd 80    ; jz .return
+ 9d:0 | 809d | 28 10       ; mov a, value
+ 9f:0 | 809f | 18 00       ; mov result, a
+ a1:0 | 80a1 | 28 08       ; mov a, partial_product
+ a3:0 | 80a3 | 18 01       ; mov (result + 1), a
+ a5:0 | 80a5 | 28 09       ; mov a, (partial_product + 1)
+ a7:0 | 80a7 | 18 02       ; mov (result + 2), a
+ a9:0 | 80a9 | 28 0a       ; mov a, (partial_product + 2)
+ ab:0 | 80ab | 18 03       ; mov (result + 3), a
+ ad:0 | 80ad | 28 0b       ; mov a, (partial_product + 3)
+ af:0 | 80af | 18 04       ; mov (result + 4), a
+ b1:0 | 80b1 | 28 0c       ; mov a, (partial_product + 4)
+ b3:0 | 80b3 | 18 05       ; mov (result + 5), a
+ b5:0 | 80b5 | 28 0d       ; mov a, (partial_product + 5)
+ b7:0 | 80b7 | 18 06       ; mov (result + 6), a
+ b9:0 | 80b9 | 28 0e       ; mov a, (partial_product + 6)
+ bb:0 | 80bb | 18 07       ; mov (result + 7), a
+ bd:0 | 80bd | 28 0f       ; mov a, (partial_product + 7)
+ bf:0 | 80bf | 08 00       ; mov # 0x00, a
+ c1:0 | 80c1 | 28 00       ; mov a, result
+ c3:0 | 80c3 | 28 01       ; mov a, (result + 1)
+ c5:0 | 80c5 | 28 02       ; mov a, (result + 2)
+ c7:0 | 80c7 | 28 03       ; mov a, (result + 3)
+ c9:0 | 80c9 | 28 04       ; mov a, (result + 4)
+ cb:0 | 80cb | 28 05       ; mov a, (result + 5)
+ cd:0 | 80cd | 28 06       ; mov a, (result + 6)
+ cf:0 | 80cf | 28 07       ; mov a, (result + 7)
+ d1:0 | 80d1 | 1c 39 80    ; jmp .factorial_loop
+ d4:0 | 80d4 |             ; .return_one:
+ d4:0 | 80d4 | 08 01       ; mov # 0x01, a
+ d6:0 | 80d6 | 28 00       ; mov a, result
+ d8:0 | 80d8 | 5b          ; rts
+ d9:0 | 80d9 |             ; .return_two:
+ d9:0 | 80d9 | 08 02       ; mov # 0x02, a
+ db:0 | 80db | 28 00       ; mov a, result
+ dd:0 | 80dd |             ; .return:
+ dd:0 | 80dd | 5b          ; rts

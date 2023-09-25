@@ -1,0 +1,11 @@
+Travel cells left-to-right.
+
+(Rule 86 is mirror of Rule 30)
+
+The last cell starts at 1, the rest, at 0.
+
+For each OLD cell, leave its value alone; and if its value is
+one, set the cell 1 to the left to 1, and invert the cell 2 to the left.
+
+=> equivalent to (previous value of that cell OR previous value of cell 1 to right)
+    XOR previous value of cell 2 to right

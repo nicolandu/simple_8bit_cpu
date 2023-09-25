@@ -1,0 +1,2767 @@
+  outp | addr | data
+
+  --:- |    0 |             ; bf_pc:
+  --:- |    2 |             ; bf_ptr:
+  --:- |    4 |             ; count:
+  --:- |  200 |             ; bf_data_seg:
+   0:0 | 8000 |             ; bf_interpreter:
+   0:0 | 8000 | 68 ff       ; mov # 0xFF, sp
+   2:0 | 8002 | 78 01       ; outmode text
+   4:0 | 8004 | 08 83       ; mov # (bf_code_seg & 0xFF), a
+   6:0 | 8006 | 28 00       ; mov a, bf_pc
+   8:0 | 8008 | 08 82       ; mov # (bf_code_seg >> 8), a
+   a:0 | 800a | 28 01       ; mov a, (bf_pc+1)
+   c:0 | 800c | 08 00       ; mov # (bf_data_seg & 0xFF), a
+   e:0 | 800e | 28 02       ; mov a, bf_ptr
+  10:0 | 8010 | 08 02       ; mov # (bf_data_seg >> 8), a
+  12:0 | 8012 | 28 03       ; mov a, (bf_ptr+1)
+  14:0 | 8014 |             ; interpreter_loop:
+  14:0 | 8014 | 39 00 00    ; mov bf_pc, b
+  17:0 | 8017 | 49 01 00    ; mov (bf_pc+1), x
+  1a:0 | 801a | 0b          ; mov (x,b), a
+  1b:0 | 801b | 12          ; mov a, x
+  1c:0 | 801c | 64 0f       ; and # 0x0F, a
+  1e:0 | 801e | 28 04       ; mov a, count
+  20:0 | 8020 | 13          ; mov x, a
+  21:0 | 8021 | 64 f0       ; and # 0xF0, a
+  23:0 | 8023 | 12          ; mov a, x
+  24:0 | 8024 | 1d 82       ; jmp (opcode_branch_table, x)
+  26:0 | 8026 |             ; case_inc_ptr:
+  26:0 | 8026 | 02 05 04 00 ; rol count, 0
+  2a:0 | 802a | 18 02       ; mov bf_ptr, a
+  2c:0 | 802c | 02 04 04    ; add count, a
+  2f:0 | 802f | 28 02       ; mov a, bf_ptr
+  31:0 | 8031 | 18 03       ; mov (bf_ptr+1), a
+  33:0 | 8033 | 24 00       ; addc # 0x00, a
+  35:0 | 8035 | 28 03       ; mov a, (bf_ptr+1)
+  37:0 | 8037 | 1c 2a 81    ; jmp inc_pc
+  3a:0 | 803a |             ; case_dec_ptr:
+  3a:0 | 803a | 02 05 04 00 ; rol count, 0
+  3e:0 | 803e | 18 02       ; mov bf_ptr, a
+  40:0 | 8040 | 03 15 04 00 ; sub count, a
+  44:0 | 8044 | 28 02       ; mov a, bf_ptr
+  46:0 | 8046 | 18 03       ; mov (bf_ptr+1), a
+  48:0 | 8048 | 24 ff       ; subc # 0x00, a
+  4a:0 | 804a | 28 03       ; mov a, (bf_ptr+1)
+  4c:0 | 804c | 1c 2a 81    ; jmp inc_pc
+  4f:0 | 804f |             ; case_inc_val:
+  4f:0 | 804f | 39 02 00    ; mov bf_ptr, b
+  52:0 | 8052 | 49 03 00    ; mov (bf_ptr+1), x
+  55:0 | 8055 | 5e          ; push b
+  56:0 | 8056 | 0b          ; mov (x,b), a
+  57:0 | 8057 | 02 04 04    ; add count, a
+  5a:0 | 805a | 5f          ; pop b
+  5b:0 | 805b | 7e          ; push flags
+  5c:0 | 805c | 1b          ; mov a, (x,b)
+  5d:0 | 805d | 02 34 01    ; add # 0x01, b
+  60:0 | 8060 | 7f          ; pop flags
+  61:0 | 8061 | 5e          ; push b
+  62:0 | 8062 | 0b          ; mov (x,b), a
+  63:0 | 8063 | 24 00       ; addc # 0x00, a
+  65:0 | 8065 | 5f          ; pop b
+  66:0 | 8066 | 1b          ; mov a, (x,b)
+  67:0 | 8067 | 1c 2a 81    ; jmp inc_pc
+  6a:0 | 806a |             ; case_dec_val:
+  6a:0 | 806a | 39 02 00    ; mov bf_ptr, b
+  6d:0 | 806d | 49 03 00    ; mov (bf_ptr+1), x
+  70:0 | 8070 | 5e          ; push b
+  71:0 | 8071 | 0b          ; mov (x,b), a
+  72:0 | 8072 | 03 15 04 00 ; sub count, a
+  76:0 | 8076 | 5f          ; pop b
+  77:0 | 8077 | 7e          ; push flags
+  78:0 | 8078 | 1b          ; mov a, (x,b)
+  79:0 | 8079 | 02 34 01    ; add # 0x01, b
+  7c:0 | 807c | 7f          ; pop flags
+  7d:0 | 807d | 5e          ; push b
+  7e:0 | 807e | 0b          ; mov (x,b), a
+  7f:0 | 807f | 24 ff       ; subc # 0x00, a
+  81:0 | 8081 | 5f          ; pop b
+  82:0 | 8082 | 1b          ; mov a, (x,b)
+  83:0 | 8083 | 1c 2a 81    ; jmp inc_pc
+  86:0 | 8086 |             ; case_put_val:
+  86:0 | 8086 | 39 02 00    ; mov bf_ptr, b
+  89:0 | 8089 | 49 03 00    ; mov (bf_ptr+1), x
+  8c:0 | 808c | 0b          ; mov (x,b), a
+  8d:0 | 808d | 71          ; out a
+  8e:0 | 808e | 1c 2a 81    ; jmp inc_pc
+  91:0 | 8091 |             ; case_get_val:
+  91:0 | 8091 | 39 02 00    ; mov bf_ptr, b
+  94:0 | 8094 | 49 03 00    ; mov (bf_ptr+1), x
+  97:0 | 8097 | 40          ; mov ina, a
+  98:0 | 8098 | 1b          ; mov a, (x,b)
+  99:0 | 8099 | 02 34 01    ; add # 0x01, b
+  9c:0 | 809c | 08 00       ; mov # 0x00, a
+  9e:0 | 809e | 1b          ; mov a, (x,b)
+  9f:0 | 809f | 1c 2a 81    ; jmp inc_pc
+  a2:0 | 80a2 |             ; case_jmp_fwd:
+  a2:0 | 80a2 | 18 00       ; mov bf_pc, a
+  a4:0 | 80a4 | 02 24 01    ; add # 0x01, a
+  a7:0 | 80a7 | 28 00       ; mov a, bf_pc
+  a9:0 | 80a9 | 18 01       ; mov (bf_pc+1), a
+  ab:0 | 80ab | 24 00       ; addc # 0x00, a
+  ad:0 | 80ad | 28 01       ; mov a, (bf_pc+1)
+  af:0 | 80af | 39 00 00    ; mov bf_pc, b
+  b2:0 | 80b2 | 12          ; mov a, x
+  b3:0 | 80b3 | 0b          ; mov (x,b), a
+  b4:0 | 80b4 | 4e          ; push a
+  b5:0 | 80b5 | 11          ; mov b, a
+  b6:0 | 80b6 | 02 24 01    ; add # 0x01, a
+  b9:0 | 80b9 | 28 00       ; mov a, bf_pc
+  bb:0 | 80bb | 13          ; mov x, a
+  bc:0 | 80bc | 24 00       ; addc # 0x00, a
+  be:0 | 80be | 28 01       ; mov a, (bf_pc+1)
+  c0:0 | 80c0 | 39 00 00    ; mov bf_pc, b
+  c3:0 | 80c3 | 0b          ; mov (x,b), a
+  c4:0 | 80c4 | 4e          ; push a
+  c5:0 | 80c5 | 39 02 00    ; mov bf_ptr, b
+  c8:0 | 80c8 | 5e          ; push b
+  c9:0 | 80c9 | 49 03 00    ; mov (bf_ptr+1), x
+  cc:0 | 80cc | 0b          ; mov (x,b), a
+  cd:0 | 80cd | 54 00       ; or # 0x00, a
+  cf:0 | 80cf | 5f          ; pop b
+  d0:0 | 80d0 | 5c 28 81    ; jnz pop_jmp_addr
+  d3:0 | 80d3 | 02 34 01    ; add # 0x01, b
+  d6:0 | 80d6 | 0b          ; mov (x,b), a
+  d7:0 | 80d7 | 54 00       ; or # 0x00, a
+  d9:0 | 80d9 | 5c 28 81    ; jnz pop_jmp_addr
+  dc:0 | 80dc | 4f          ; pop a
+  dd:0 | 80dd | 28 01       ; mov a, (bf_pc+1)
+  df:0 | 80df | 4f          ; pop a
+  e0:0 | 80e0 | 28 00       ; mov a, bf_pc
+  e2:0 | 80e2 | 1c 14 80    ; jmp interpreter_loop
+  e5:0 | 80e5 |             ; case_jmp_bck:
+  e5:0 | 80e5 | 18 00       ; mov bf_pc, a
+  e7:0 | 80e7 | 02 24 01    ; add # 0x01, a
+  ea:0 | 80ea | 28 00       ; mov a, bf_pc
+  ec:0 | 80ec | 18 01       ; mov (bf_pc+1), a
+  ee:0 | 80ee | 24 00       ; addc # 0x00, a
+  f0:0 | 80f0 | 28 01       ; mov a, (bf_pc+1)
+  f2:0 | 80f2 | 39 00 00    ; mov bf_pc, b
+  f5:0 | 80f5 | 12          ; mov a, x
+  f6:0 | 80f6 | 0b          ; mov (x,b), a
+  f7:0 | 80f7 | 4e          ; push a
+  f8:0 | 80f8 | 11          ; mov b, a
+  f9:0 | 80f9 | 02 24 01    ; add # 0x01, a
+  fc:0 | 80fc | 28 00       ; mov a, bf_pc
+  fe:0 | 80fe | 13          ; mov x, a
+  ff:0 | 80ff | 24 00       ; addc # 0x00, a
+ 101:0 | 8101 | 28 01       ; mov a, (bf_pc+1)
+ 103:0 | 8103 | 39 00 00    ; mov bf_pc, b
+ 106:0 | 8106 | 0b          ; mov (x,b), a
+ 107:0 | 8107 | 4e          ; push a
+ 108:0 | 8108 | 39 02 00    ; mov bf_ptr, b
+ 10b:0 | 810b | 5e          ; push b
+ 10c:0 | 810c | 49 03 00    ; mov (bf_ptr+1), x
+ 10f:0 | 810f | 0b          ; mov (x,b), a
+ 110:0 | 8110 | 54 00       ; or # 0x00, a
+ 112:0 | 8112 | 5f          ; pop b
+ 113:0 | 8113 | 5c 1f 81    ; jnz .jump_back
+ 116:0 | 8116 | 02 34 01    ; add # 0x01, b
+ 119:0 | 8119 | 0b          ; mov (x,b), a
+ 11a:0 | 811a | 54 00       ; or # 0x00, a
+ 11c:0 | 811c | 4c 28 81    ; jz pop_jmp_addr
+ 11f:0 | 811f |             ; .jump_back:
+ 11f:0 | 811f | 4f          ; pop a
+ 120:0 | 8120 | 28 01       ; mov a, (bf_pc+1)
+ 122:0 | 8122 | 4f          ; pop a
+ 123:0 | 8123 | 28 00       ; mov a, bf_pc
+ 125:0 | 8125 | 1c 14 80    ; jmp interpreter_loop
+ 128:0 | 8128 |             ; pop_jmp_addr:
+ 128:0 | 8128 | 3f          ; pop
+ 129:0 | 8129 | 3f          ; pop
+ 12a:0 | 812a |             ; inc_pc:
+ 12a:0 | 812a | 18 00       ; mov bf_pc, a
+ 12c:0 | 812c | 02 24 01    ; add # 0x01, a
+ 12f:0 | 812f | 28 00       ; mov a, bf_pc
+ 131:0 | 8131 | 18 01       ; mov (bf_pc+1), a
+ 133:0 | 8133 | 24 00       ; addc # 0x00, a
+ 135:0 | 8135 | 28 01       ; mov a, (bf_pc+1)
+ 137:0 | 8137 | 1c 14 80    ; jmp interpreter_loop
+ 200:0 | 8200 |             ; opcode_branch_table:
+ 200:0 | 8200 | 01          ; hlt
+ 210:0 | 8210 | 1c 26 80    ; jmp case_inc_ptr
+ 220:0 | 8220 | 1c 3a 80    ; jmp case_dec_ptr
+ 230:0 | 8230 | 1c 4f 80    ; jmp case_inc_val
+ 240:0 | 8240 | 1c 6a 80    ; jmp case_dec_val
+ 250:0 | 8250 | 1c 86 80    ; jmp case_put_val
+ 260:0 | 8260 | 1c 91 80    ; jmp case_get_val
+ 270:0 | 8270 | 1c a2 80    ; jmp case_jmp_fwd
+ 280:0 | 8280 | 1c e5 80    ; jmp case_jmp_bck
+ 283:0 | 8283 |             ; bf_code_seg:
+ 283:0 | 8283 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 284:0 | 8284 | 13          ; #d8 (OP_INC_PTR | 0x3
+ 285:0 | 8285 | 70          ; #d8 OP_JMP_FWD
+ 286:0 | 8286 | 8c 82       ; #d16 le(brace_close_00_000`16)
+ 288:0 | 8288 |             ; brace_open_00_000:
+ 288:0 | 8288 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 289:0 | 8289 | 80          ; #d8 OP_JMP_BCK
+ 28a:0 | 828a | 88 82       ; #d16 le(brace_open_00_000`16)
+ 28c:0 | 828c |             ; brace_close_00_000:
+ 28c:0 | 828c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 28d:0 | 828d | 70          ; #d8 OP_JMP_FWD
+ 28e:0 | 828e | 94 82       ; #d16 le(brace_close_00_001`16)
+ 290:0 | 8290 |             ; brace_open_00_001:
+ 290:0 | 8290 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 291:0 | 8291 | 80          ; #d8 OP_JMP_BCK
+ 292:0 | 8292 | 90 82       ; #d16 le(brace_open_00_001`16)
+ 294:0 | 8294 |             ; brace_close_00_001:
+ 294:0 | 8294 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 295:0 | 8295 | 70          ; #d8 OP_JMP_FWD
+ 296:0 | 8296 | 9f 82       ; #d16 le(brace_close_00_002`16)
+ 298:0 | 8298 |             ; brace_open_00_002:
+ 298:0 | 8298 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 299:0 | 8299 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 29a:0 | 829a | 39          ; #d8 (OP_INC_VAL | 0x9
+ 29b:0 | 829b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 29c:0 | 829c | 80          ; #d8 OP_JMP_BCK
+ 29d:0 | 829d | 98 82       ; #d16 le(brace_open_00_002`16)
+ 29f:0 | 829f |             ; brace_close_00_002:
+ 29f:0 | 829f | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2a0:0 | 82a0 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2a1:0 | 82a1 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 2a2:0 | 82a2 | 70          ; #d8 OP_JMP_FWD
+ 2a3:0 | 82a3 | ac 82       ; #d16 le(brace_close_00_003`16)
+ 2a5:0 | 82a5 |             ; brace_open_00_003:
+ 2a5:0 | 82a5 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ 2a6:0 | 82a6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2a7:0 | 82a7 | 33          ; #d8 (OP_INC_VAL | 0x3
+ 2a8:0 | 82a8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2a9:0 | 82a9 | 80          ; #d8 OP_JMP_BCK
+ 2aa:0 | 82aa | a5 82       ; #d16 le(brace_open_00_003`16)
+ 2ac:0 | 82ac |             ; brace_close_00_003:
+ 2ac:0 | 82ac | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2ad:0 | 82ad | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2ae:0 | 82ae | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2af:0 | 82af | 37          ; #d8 (OP_INC_VAL | 0x7
+ 2b0:0 | 82b0 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2b1:0 | 82b1 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2b2:0 | 82b2 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2b3:0 | 82b3 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2b4:0 | 82b4 | 33          ; #d8 (OP_INC_VAL | 0x3
+ 2b5:0 | 82b5 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2b6:0 | 82b6 | 70          ; #d8 OP_JMP_FWD
+ 2b7:0 | 82b7 | bd 82       ; #d16 le(brace_close_00_004`16)
+ 2b9:0 | 82b9 |             ; brace_open_00_004:
+ 2b9:0 | 82b9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2ba:0 | 82ba | 80          ; #d8 OP_JMP_BCK
+ 2bb:0 | 82bb | b9 82       ; #d16 le(brace_open_00_004`16)
+ 2bd:0 | 82bd |             ; brace_close_00_004:
+ 2bd:0 | 82bd | 70          ; #d8 OP_JMP_FWD
+ 2be:0 | 82be | 47 83       ; #d16 le(brace_close_00_005`16)
+ 2c0:0 | 82c0 |             ; brace_open_00_005:
+ 2c0:0 | 82c0 | 70          ; #d8 OP_JMP_FWD
+ 2c1:0 | 82c1 | c7 82       ; #d16 le(brace_close_01_000`16)
+ 2c3:0 | 82c3 |             ; brace_open_01_000:
+ 2c3:0 | 82c3 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2c4:0 | 82c4 | 80          ; #d8 OP_JMP_BCK
+ 2c5:0 | 82c5 | c3 82       ; #d16 le(brace_open_01_000`16)
+ 2c7:0 | 82c7 |             ; brace_close_01_000:
+ 2c7:0 | 82c7 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2c8:0 | 82c8 | 70          ; #d8 OP_JMP_FWD
+ 2c9:0 | 82c9 | cf 82       ; #d16 le(brace_close_01_001`16)
+ 2cb:0 | 82cb |             ; brace_open_01_001:
+ 2cb:0 | 82cb | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2cc:0 | 82cc | 80          ; #d8 OP_JMP_BCK
+ 2cd:0 | 82cd | cb 82       ; #d16 le(brace_open_01_001`16)
+ 2cf:0 | 82cf |             ; brace_close_01_001:
+ 2cf:0 | 82cf | 39          ; #d8 (OP_INC_VAL | 0x9
+ 2d0:0 | 82d0 | 70          ; #d8 OP_JMP_FWD
+ 2d1:0 | 82d1 | da 82       ; #d16 le(brace_close_01_002`16)
+ 2d3:0 | 82d3 |             ; brace_open_01_002:
+ 2d3:0 | 82d3 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2d4:0 | 82d4 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 2d5:0 | 82d5 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2d6:0 | 82d6 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2d7:0 | 82d7 | 80          ; #d8 OP_JMP_BCK
+ 2d8:0 | 82d8 | d3 82       ; #d16 le(brace_open_01_002`16)
+ 2da:0 | 82da |             ; brace_close_01_002:
+ 2da:0 | 82da | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2db:0 | 82db | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2dc:0 | 82dc | 53          ; #d8 (OP_PUT_VAL | 0x3
+ 2dd:0 | 82dd | 4e          ; #d8 (OP_DEC_VAL | 0xE
+ 2de:0 | 82de | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2df:0 | 82df | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2e0:0 | 82e0 | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 2e1:0 | 82e1 | 70          ; #d8 OP_JMP_FWD
+ 2e2:0 | 82e2 | eb 82       ; #d16 le(brace_close_01_003`16)
+ 2e4:0 | 82e4 |             ; brace_open_01_003:
+ 2e4:0 | 82e4 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2e5:0 | 82e5 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 2e6:0 | 82e6 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2e7:0 | 82e7 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2e8:0 | 82e8 | 80          ; #d8 OP_JMP_BCK
+ 2e9:0 | 82e9 | e4 82       ; #d16 le(brace_open_01_003`16)
+ 2eb:0 | 82eb |             ; brace_close_01_003:
+ 2eb:0 | 82eb | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2ec:0 | 82ec | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2ed:0 | 82ed | 33          ; #d8 (OP_INC_VAL | 0x3
+ 2ee:0 | 82ee | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2ef:0 | 82ef | 47          ; #d8 (OP_DEC_VAL | 0x7
+ 2f0:0 | 82f0 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2f1:0 | 82f1 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2f2:0 | 82f2 | 39          ; #d8 (OP_INC_VAL | 0x9
+ 2f3:0 | 82f3 | 70          ; #d8 OP_JMP_FWD
+ 2f4:0 | 82f4 | fd 82       ; #d16 le(brace_close_01_004`16)
+ 2f6:0 | 82f6 |             ; brace_open_01_004:
+ 2f6:0 | 82f6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2f7:0 | 82f7 | 45          ; #d8 (OP_DEC_VAL | 0x5
+ 2f8:0 | 82f8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2f9:0 | 82f9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2fa:0 | 82fa | 80          ; #d8 OP_JMP_BCK
+ 2fb:0 | 82fb | f6 82       ; #d16 le(brace_open_01_004`16)
+ 2fd:0 | 82fd |             ; brace_close_01_004:
+ 2fd:0 | 82fd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2fe:0 | 82fe | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2ff:0 | 82ff | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 300:0 | 8300 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 301:0 | 8301 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 302:0 | 8302 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 303:0 | 8303 | 70          ; #d8 OP_JMP_FWD
+ 304:0 | 8304 | 0d 83       ; #d16 le(brace_close_01_005`16)
+ 306:0 | 8306 |             ; brace_open_01_005:
+ 306:0 | 8306 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 307:0 | 8307 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 308:0 | 8308 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 309:0 | 8309 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 30a:0 | 830a | 80          ; #d8 OP_JMP_BCK
+ 30b:0 | 830b | 06 83       ; #d16 le(brace_open_01_005`16)
+ 30d:0 | 830d |             ; brace_close_01_005:
+ 30d:0 | 830d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 30e:0 | 830e | 32          ; #d8 (OP_INC_VAL | 0x2
+ 30f:0 | 830f | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 310:0 | 8310 | 4b          ; #d8 (OP_DEC_VAL | 0xB
+ 311:0 | 8311 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 312:0 | 8312 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ 313:0 | 8313 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 314:0 | 8314 | 4b          ; #d8 (OP_DEC_VAL | 0xB
+ 315:0 | 8315 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 316:0 | 8316 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 317:0 | 8317 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 318:0 | 8318 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 319:0 | 8319 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 31a:0 | 831a | 3e          ; #d8 (OP_INC_VAL | 0xE
+ 31b:0 | 831b | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 31c:0 | 831c | 11          ; #d8 (OP_INC_PTR | 0x1
+ 31d:0 | 831d | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 31e:0 | 831e | 70          ; #d8 OP_JMP_FWD
+ 31f:0 | 831f | 28 83       ; #d16 le(brace_close_01_006`16)
+ 321:0 | 8321 |             ; brace_open_01_006:
+ 321:0 | 8321 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 322:0 | 8322 | 45          ; #d8 (OP_DEC_VAL | 0x5
+ 323:0 | 8323 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 324:0 | 8324 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 325:0 | 8325 | 80          ; #d8 OP_JMP_BCK
+ 326:0 | 8326 | 21 83       ; #d16 le(brace_open_01_006`16)
+ 328:0 | 8328 |             ; brace_close_01_006:
+ 328:0 | 8328 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 329:0 | 8329 | 52          ; #d8 (OP_PUT_VAL | 0x2
+ 32a:0 | 832a | 70          ; #d8 OP_JMP_FWD
+ 32b:0 | 832b | 31 83       ; #d16 le(brace_close_01_007`16)
+ 32d:0 | 832d |             ; brace_open_01_007:
+ 32d:0 | 832d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 32e:0 | 832e | 80          ; #d8 OP_JMP_BCK
+ 32f:0 | 832f | 2d 83       ; #d16 le(brace_open_01_007`16)
+ 331:0 | 8331 |             ; brace_close_01_007:
+ 331:0 | 8331 | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 332:0 | 8332 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 333:0 | 8333 | 70          ; #d8 OP_JMP_FWD
+ 334:0 | 8334 | 3a 83       ; #d16 le(brace_close_01_008`16)
+ 336:0 | 8336 |             ; brace_open_01_008:
+ 336:0 | 8336 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 337:0 | 8337 | 80          ; #d8 OP_JMP_BCK
+ 338:0 | 8338 | 36 83       ; #d16 le(brace_open_01_008`16)
+ 33a:0 | 833a |             ; brace_close_01_008:
+ 33a:0 | 833a | 37          ; #d8 (OP_INC_VAL | 0x7
+ 33b:0 | 833b | 70          ; #d8 OP_JMP_FWD
+ 33c:0 | 833c | 43 83       ; #d16 le(brace_close_01_009`16)
+ 33e:0 | 833e |             ; brace_open_01_009:
+ 33e:0 | 833e | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 33f:0 | 833f | 61          ; #d8 (OP_GET_VAL | 0x1
+ 340:0 | 8340 | 80          ; #d8 OP_JMP_BCK
+ 341:0 | 8341 | 3e 83       ; #d16 le(brace_open_01_009`16)
+ 343:0 | 8343 |             ; brace_close_01_009:
+ 343:0 | 8343 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 344:0 | 8344 | 80          ; #d8 OP_JMP_BCK
+ 345:0 | 8345 | c0 82       ; #d16 le(brace_open_00_005`16)
+ 347:0 | 8347 |             ; brace_close_00_005:
+ 347:0 | 8347 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 348:0 | 8348 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 349:0 | 8349 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 34a:0 | 834a | 70          ; #d8 OP_JMP_FWD
+ 34b:0 | 834b | 54 83       ; #d16 le(brace_close_00_006`16)
+ 34d:0 | 834d |             ; brace_open_00_006:
+ 34d:0 | 834d | 11          ; #d8 (OP_INC_PTR | 0x1
+ 34e:0 | 834e | 38          ; #d8 (OP_INC_VAL | 0x8
+ 34f:0 | 834f | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 350:0 | 8350 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 351:0 | 8351 | 80          ; #d8 OP_JMP_BCK
+ 352:0 | 8352 | 4d 83       ; #d16 le(brace_open_00_006`16)
+ 354:0 | 8354 |             ; brace_close_00_006:
+ 354:0 | 8354 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 355:0 | 8355 | 70          ; #d8 OP_JMP_FWD
+ 356:0 | 8356 | 5f 83       ; #d16 le(brace_close_00_007`16)
+ 358:0 | 8358 |             ; brace_open_00_007:
+ 358:0 | 8358 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 359:0 | 8359 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 35a:0 | 835a | 11          ; #d8 (OP_INC_PTR | 0x1
+ 35b:0 | 835b | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 35c:0 | 835c | 80          ; #d8 OP_JMP_BCK
+ 35d:0 | 835d | 58 83       ; #d16 le(brace_open_00_007`16)
+ 35f:0 | 835f |             ; brace_close_00_007:
+ 35f:0 | 835f | 31          ; #d8 (OP_INC_VAL | 0x1
+ 360:0 | 8360 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 361:0 | 8361 | 70          ; #d8 OP_JMP_FWD
+ 362:0 | 8362 | e4 84       ; #d16 le(brace_close_00_008`16)
+ 364:0 | 8364 |             ; brace_open_00_008:
+ 364:0 | 8364 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 365:0 | 8365 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 366:0 | 8366 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 367:0 | 8367 | 70          ; #d8 OP_JMP_FWD
+ 368:0 | 8368 | 71 83       ; #d16 le(brace_close_01_010`16)
+ 36a:0 | 836a |             ; brace_open_01_010:
+ 36a:0 | 836a | 11          ; #d8 (OP_INC_PTR | 0x1
+ 36b:0 | 836b | 34          ; #d8 (OP_INC_VAL | 0x4
+ 36c:0 | 836c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 36d:0 | 836d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 36e:0 | 836e | 80          ; #d8 OP_JMP_BCK
+ 36f:0 | 836f | 6a 83       ; #d16 le(brace_open_01_010`16)
+ 371:0 | 8371 |             ; brace_close_01_010:
+ 371:0 | 8371 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 372:0 | 8372 | 70          ; #d8 OP_JMP_FWD
+ 373:0 | 8373 | 7c 83       ; #d16 le(brace_close_01_011`16)
+ 375:0 | 8375 |             ; brace_open_01_011:
+ 375:0 | 8375 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 376:0 | 8376 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 377:0 | 8377 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 378:0 | 8378 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 379:0 | 8379 | 80          ; #d8 OP_JMP_BCK
+ 37a:0 | 837a | 75 83       ; #d16 le(brace_open_01_011`16)
+ 37c:0 | 837c |             ; brace_close_01_011:
+ 37c:0 | 837c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 37d:0 | 837d | 70          ; #d8 OP_JMP_FWD
+ 37e:0 | 837e | 87 83       ; #d16 le(brace_close_01_012`16)
+ 380:0 | 8380 |             ; brace_open_01_012:
+ 380:0 | 8380 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 381:0 | 8381 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 382:0 | 8382 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 383:0 | 8383 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 384:0 | 8384 | 80          ; #d8 OP_JMP_BCK
+ 385:0 | 8385 | 80 83       ; #d16 le(brace_open_01_012`16)
+ 387:0 | 8387 |             ; brace_close_01_012:
+ 387:0 | 8387 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 388:0 | 8388 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 389:0 | 8389 | 70          ; #d8 OP_JMP_FWD
+ 38a:0 | 838a | 02 84       ; #d16 le(brace_close_01_013`16)
+ 38c:0 | 838c |             ; brace_open_01_013:
+ 38c:0 | 838c | 12          ; #d8 (OP_INC_PTR | 0x2
+ 38d:0 | 838d | 31          ; #d8 (OP_INC_VAL | 0x1
+ 38e:0 | 838e | 70          ; #d8 OP_JMP_FWD
+ 38f:0 | 838f | 95 83       ; #d16 le(brace_close_02_000`16)
+ 391:0 | 8391 |             ; brace_open_02_000:
+ 391:0 | 8391 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 392:0 | 8392 | 80          ; #d8 OP_JMP_BCK
+ 393:0 | 8393 | 91 83       ; #d16 le(brace_open_02_000`16)
+ 395:0 | 8395 |             ; brace_close_02_000:
+ 395:0 | 8395 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 396:0 | 8396 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 397:0 | 8397 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 398:0 | 8398 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 399:0 | 8399 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 39a:0 | 839a | 70          ; #d8 OP_JMP_FWD
+ 39b:0 | 839b | a1 83       ; #d16 le(brace_close_02_001`16)
+ 39d:0 | 839d |             ; brace_open_02_001:
+ 39d:0 | 839d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 39e:0 | 839e | 80          ; #d8 OP_JMP_BCK
+ 39f:0 | 839f | 9d 83       ; #d16 le(brace_open_02_001`16)
+ 3a1:0 | 83a1 |             ; brace_close_02_001:
+ 3a1:0 | 83a1 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 3a2:0 | 83a2 | 70          ; #d8 OP_JMP_FWD
+ 3a3:0 | 83a3 | ac 83       ; #d16 le(brace_close_02_002`16)
+ 3a5:0 | 83a5 |             ; brace_open_02_002:
+ 3a5:0 | 83a5 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3a6:0 | 83a6 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 3a7:0 | 83a7 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 3a8:0 | 83a8 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3a9:0 | 83a9 | 80          ; #d8 OP_JMP_BCK
+ 3aa:0 | 83aa | a5 83       ; #d16 le(brace_open_02_002`16)
+ 3ac:0 | 83ac |             ; brace_close_02_002:
+ 3ac:0 | 83ac | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3ad:0 | 83ad | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3ae:0 | 83ae | 4c          ; #d8 (OP_DEC_VAL | 0xC
+ 3af:0 | 83af | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3b0:0 | 83b0 | 70          ; #d8 OP_JMP_FWD
+ 3b1:0 | 83b1 | b7 83       ; #d16 le(brace_close_02_003`16)
+ 3b3:0 | 83b3 |             ; brace_open_02_003:
+ 3b3:0 | 83b3 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3b4:0 | 83b4 | 80          ; #d8 OP_JMP_BCK
+ 3b5:0 | 83b5 | b3 83       ; #d16 le(brace_open_02_003`16)
+ 3b7:0 | 83b7 |             ; brace_close_02_003:
+ 3b7:0 | 83b7 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3b8:0 | 83b8 | 70          ; #d8 OP_JMP_FWD
+ 3b9:0 | 83b9 | c8 83       ; #d16 le(brace_close_02_004`16)
+ 3bb:0 | 83bb |             ; brace_open_02_004:
+ 3bb:0 | 83bb | 11          ; #d8 (OP_INC_PTR | 0x1
+ 3bc:0 | 83bc | 31          ; #d8 (OP_INC_VAL | 0x1
+ 3bd:0 | 83bd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3be:0 | 83be | 70          ; #d8 OP_JMP_FWD
+ 3bf:0 | 83bf | c5 83       ; #d16 le(brace_close_03_000`16)
+ 3c1:0 | 83c1 |             ; brace_open_03_000:
+ 3c1:0 | 83c1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3c2:0 | 83c2 | 80          ; #d8 OP_JMP_BCK
+ 3c3:0 | 83c3 | c1 83       ; #d16 le(brace_open_03_000`16)
+ 3c5:0 | 83c5 |             ; brace_close_03_000:
+ 3c5:0 | 83c5 | 80          ; #d8 OP_JMP_BCK
+ 3c6:0 | 83c6 | bb 83       ; #d16 le(brace_open_02_004`16)
+ 3c8:0 | 83c8 |             ; brace_close_02_004:
+ 3c8:0 | 83c8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 3c9:0 | 83c9 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 3ca:0 | 83ca | 11          ; #d8 (OP_INC_PTR | 0x1
+ 3cb:0 | 83cb | 70          ; #d8 OP_JMP_FWD
+ 3cc:0 | 83cc | d2 83       ; #d16 le(brace_close_02_005`16)
+ 3ce:0 | 83ce |             ; brace_open_02_005:
+ 3ce:0 | 83ce | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3cf:0 | 83cf | 80          ; #d8 OP_JMP_BCK
+ 3d0:0 | 83d0 | ce 83       ; #d16 le(brace_open_02_005`16)
+ 3d2:0 | 83d2 |             ; brace_close_02_005:
+ 3d2:0 | 83d2 | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 3d3:0 | 83d3 | 70          ; #d8 OP_JMP_FWD
+ 3d4:0 | 83d4 | dd 83       ; #d16 le(brace_close_02_006`16)
+ 3d6:0 | 83d6 |             ; brace_open_02_006:
+ 3d6:0 | 83d6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3d7:0 | 83d7 | 3b          ; #d8 (OP_INC_VAL | 0xB
+ 3d8:0 | 83d8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 3d9:0 | 83d9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3da:0 | 83da | 80          ; #d8 OP_JMP_BCK
+ 3db:0 | 83db | d6 83       ; #d16 le(brace_open_02_006`16)
+ 3dd:0 | 83dd |             ; brace_close_02_006:
+ 3dd:0 | 83dd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3de:0 | 83de | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3df:0 | 83df | 48          ; #d8 (OP_DEC_VAL | 0x8
+ 3e0:0 | 83e0 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3e1:0 | 83e1 | 33          ; #d8 (OP_INC_VAL | 0x3
+ 3e2:0 | 83e2 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3e3:0 | 83e3 | 46          ; #d8 (OP_DEC_VAL | 0x6
+ 3e4:0 | 83e4 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3e5:0 | 83e5 | 48          ; #d8 (OP_DEC_VAL | 0x8
+ 3e6:0 | 83e6 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 3e7:0 | 83e7 | 70          ; #d8 OP_JMP_FWD
+ 3e8:0 | 83e8 | ee 83       ; #d16 le(brace_close_02_007`16)
+ 3ea:0 | 83ea |             ; brace_open_02_007:
+ 3ea:0 | 83ea | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3eb:0 | 83eb | 80          ; #d8 OP_JMP_BCK
+ 3ec:0 | 83ec | ea 83       ; #d16 le(brace_open_02_007`16)
+ 3ee:0 | 83ee |             ; brace_close_02_007:
+ 3ee:0 | 83ee | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3ef:0 | 83ef | 70          ; #d8 OP_JMP_FWD
+ 3f0:0 | 83f0 | f6 83       ; #d16 le(brace_close_02_008`16)
+ 3f2:0 | 83f2 |             ; brace_open_02_008:
+ 3f2:0 | 83f2 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3f3:0 | 83f3 | 80          ; #d8 OP_JMP_BCK
+ 3f4:0 | 83f4 | f2 83       ; #d16 le(brace_open_02_008`16)
+ 3f6:0 | 83f6 |             ; brace_close_02_008:
+ 3f6:0 | 83f6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 3f7:0 | 83f7 | 70          ; #d8 OP_JMP_FWD
+ 3f8:0 | 83f8 | fe 83       ; #d16 le(brace_close_02_009`16)
+ 3fa:0 | 83fa |             ; brace_open_02_009:
+ 3fa:0 | 83fa | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 3fb:0 | 83fb | 80          ; #d8 OP_JMP_BCK
+ 3fc:0 | 83fc | fa 83       ; #d16 le(brace_open_02_009`16)
+ 3fe:0 | 83fe |             ; brace_close_02_009:
+ 3fe:0 | 83fe | 11          ; #d8 (OP_INC_PTR | 0x1
+ 3ff:0 | 83ff | 80          ; #d8 OP_JMP_BCK
+ 400:0 | 8400 | 8c 83       ; #d16 le(brace_open_01_013`16)
+ 402:0 | 8402 |             ; brace_close_01_013:
+ 402:0 | 8402 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 403:0 | 8403 | 70          ; #d8 OP_JMP_FWD
+ 404:0 | 8404 | d8 84       ; #d16 le(brace_close_01_014`16)
+ 406:0 | 8406 |             ; brace_open_01_014:
+ 406:0 | 8406 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 407:0 | 8407 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 408:0 | 8408 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 409:0 | 8409 | 70          ; #d8 OP_JMP_FWD
+ 40a:0 | 840a | 10 84       ; #d16 le(brace_close_02_010`16)
+ 40c:0 | 840c |             ; brace_open_02_010:
+ 40c:0 | 840c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 40d:0 | 840d | 80          ; #d8 OP_JMP_BCK
+ 40e:0 | 840e | 0c 84       ; #d16 le(brace_open_02_010`16)
+ 410:0 | 8410 |             ; brace_close_02_010:
+ 410:0 | 8410 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 411:0 | 8411 | 70          ; #d8 OP_JMP_FWD
+ 412:0 | 8412 | 1b 84       ; #d16 le(brace_close_02_011`16)
+ 414:0 | 8414 |             ; brace_open_02_011:
+ 414:0 | 8414 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 415:0 | 8415 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 416:0 | 8416 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 417:0 | 8417 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 418:0 | 8418 | 80          ; #d8 OP_JMP_BCK
+ 419:0 | 8419 | 14 84       ; #d16 le(brace_open_02_011`16)
+ 41b:0 | 841b |             ; brace_close_02_011:
+ 41b:0 | 841b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 41c:0 | 841c | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 41d:0 | 841d | 70          ; #d8 OP_JMP_FWD
+ 41e:0 | 841e | 24 84       ; #d16 le(brace_close_02_012`16)
+ 420:0 | 8420 |             ; brace_open_02_012:
+ 420:0 | 8420 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 421:0 | 8421 | 80          ; #d8 OP_JMP_BCK
+ 422:0 | 8422 | 20 84       ; #d16 le(brace_open_02_012`16)
+ 424:0 | 8424 |             ; brace_close_02_012:
+ 424:0 | 8424 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 425:0 | 8425 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 426:0 | 8426 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 427:0 | 8427 | 70          ; #d8 OP_JMP_FWD
+ 428:0 | 8428 | 45 84       ; #d16 le(brace_close_02_013`16)
+ 42a:0 | 842a |             ; brace_open_02_013:
+ 42a:0 | 842a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 42b:0 | 842b | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 42c:0 | 842c | 70          ; #d8 OP_JMP_FWD
+ 42d:0 | 842d | 36 84       ; #d16 le(brace_close_03_001`16)
+ 42f:0 | 842f |             ; brace_open_03_001:
+ 42f:0 | 842f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 430:0 | 8430 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 431:0 | 8431 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 432:0 | 8432 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 433:0 | 8433 | 80          ; #d8 OP_JMP_BCK
+ 434:0 | 8434 | 2f 84       ; #d16 le(brace_open_03_001`16)
+ 436:0 | 8436 |             ; brace_close_03_001:
+ 436:0 | 8436 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 437:0 | 8437 | 70          ; #d8 OP_JMP_FWD
+ 438:0 | 8438 | 41 84       ; #d16 le(brace_close_03_002`16)
+ 43a:0 | 843a |             ; brace_open_03_002:
+ 43a:0 | 843a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 43b:0 | 843b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 43c:0 | 843c | 31          ; #d8 (OP_INC_VAL | 0x1
+ 43d:0 | 843d | 11          ; #d8 (OP_INC_PTR | 0x1
+ 43e:0 | 843e | 80          ; #d8 OP_JMP_BCK
+ 43f:0 | 843f | 3a 84       ; #d16 le(brace_open_03_002`16)
+ 441:0 | 8441 |             ; brace_close_03_002:
+ 441:0 | 8441 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 442:0 | 8442 | 80          ; #d8 OP_JMP_BCK
+ 443:0 | 8443 | 2a 84       ; #d16 le(brace_open_02_013`16)
+ 445:0 | 8445 |             ; brace_close_02_013:
+ 445:0 | 8445 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 446:0 | 8446 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 447:0 | 8447 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 448:0 | 8448 | 70          ; #d8 OP_JMP_FWD
+ 449:0 | 8449 | 83 84       ; #d16 le(brace_close_02_014`16)
+ 44b:0 | 844b |             ; brace_open_02_014:
+ 44b:0 | 844b | 13          ; #d8 (OP_INC_PTR | 0x3
+ 44c:0 | 844c | 70          ; #d8 OP_JMP_FWD
+ 44d:0 | 844d | 53 84       ; #d16 le(brace_close_03_003`16)
+ 44f:0 | 844f |             ; brace_open_03_003:
+ 44f:0 | 844f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 450:0 | 8450 | 80          ; #d8 OP_JMP_BCK
+ 451:0 | 8451 | 4f 84       ; #d16 le(brace_open_03_003`16)
+ 453:0 | 8453 |             ; brace_close_03_003:
+ 453:0 | 8453 | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 454:0 | 8454 | 70          ; #d8 OP_JMP_FWD
+ 455:0 | 8455 | 5e 84       ; #d16 le(brace_close_03_004`16)
+ 457:0 | 8457 |             ; brace_open_03_004:
+ 457:0 | 8457 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 458:0 | 8458 | 3b          ; #d8 (OP_INC_VAL | 0xB
+ 459:0 | 8459 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 45a:0 | 845a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 45b:0 | 845b | 80          ; #d8 OP_JMP_BCK
+ 45c:0 | 845c | 57 84       ; #d16 le(brace_open_03_004`16)
+ 45e:0 | 845e |             ; brace_close_03_004:
+ 45e:0 | 845e | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 45f:0 | 845f | 39          ; #d8 (OP_INC_VAL | 0x9
+ 460:0 | 8460 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 461:0 | 8461 | 48          ; #d8 (OP_DEC_VAL | 0x8
+ 462:0 | 8462 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 463:0 | 8463 | 33          ; #d8 (OP_INC_VAL | 0x3
+ 464:0 | 8464 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 465:0 | 8465 | 46          ; #d8 (OP_DEC_VAL | 0x6
+ 466:0 | 8466 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 467:0 | 8467 | 48          ; #d8 (OP_DEC_VAL | 0x8
+ 468:0 | 8468 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 469:0 | 8469 | 70          ; #d8 OP_JMP_FWD
+ 46a:0 | 846a | 70 84       ; #d16 le(brace_close_03_005`16)
+ 46c:0 | 846c |             ; brace_open_03_005:
+ 46c:0 | 846c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 46d:0 | 846d | 80          ; #d8 OP_JMP_BCK
+ 46e:0 | 846e | 6c 84       ; #d16 le(brace_open_03_005`16)
+ 470:0 | 8470 |             ; brace_close_03_005:
+ 470:0 | 8470 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 471:0 | 8471 | 70          ; #d8 OP_JMP_FWD
+ 472:0 | 8472 | 78 84       ; #d16 le(brace_close_03_006`16)
+ 474:0 | 8474 |             ; brace_open_03_006:
+ 474:0 | 8474 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 475:0 | 8475 | 80          ; #d8 OP_JMP_BCK
+ 476:0 | 8476 | 74 84       ; #d16 le(brace_open_03_006`16)
+ 478:0 | 8478 |             ; brace_close_03_006:
+ 478:0 | 8478 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 479:0 | 8479 | 70          ; #d8 OP_JMP_FWD
+ 47a:0 | 847a | 80 84       ; #d16 le(brace_close_03_007`16)
+ 47c:0 | 847c |             ; brace_open_03_007:
+ 47c:0 | 847c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 47d:0 | 847d | 80          ; #d8 OP_JMP_BCK
+ 47e:0 | 847e | 7c 84       ; #d16 le(brace_open_03_007`16)
+ 480:0 | 8480 |             ; brace_close_03_007:
+ 480:0 | 8480 | 80          ; #d8 OP_JMP_BCK
+ 481:0 | 8481 | 4b 84       ; #d16 le(brace_open_02_014`16)
+ 483:0 | 8483 |             ; brace_close_02_014:
+ 483:0 | 8483 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 484:0 | 8484 | 70          ; #d8 OP_JMP_FWD
+ 485:0 | 8485 | cd 84       ; #d16 le(brace_close_02_015`16)
+ 487:0 | 8487 |             ; brace_open_02_015:
+ 487:0 | 8487 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 488:0 | 8488 | 70          ; #d8 OP_JMP_FWD
+ 489:0 | 8489 | 8f 84       ; #d16 le(brace_close_03_008`16)
+ 48b:0 | 848b |             ; brace_open_03_008:
+ 48b:0 | 848b | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 48c:0 | 848c | 80          ; #d8 OP_JMP_BCK
+ 48d:0 | 848d | 8b 84       ; #d16 le(brace_open_03_008`16)
+ 48f:0 | 848f |             ; brace_close_03_008:
+ 48f:0 | 848f | 11          ; #d8 (OP_INC_PTR | 0x1
+ 490:0 | 8490 | 70          ; #d8 OP_JMP_FWD
+ 491:0 | 8491 | 97 84       ; #d16 le(brace_close_03_009`16)
+ 493:0 | 8493 |             ; brace_open_03_009:
+ 493:0 | 8493 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 494:0 | 8494 | 80          ; #d8 OP_JMP_BCK
+ 495:0 | 8495 | 93 84       ; #d16 le(brace_open_03_009`16)
+ 497:0 | 8497 |             ; brace_close_03_009:
+ 497:0 | 8497 | 39          ; #d8 (OP_INC_VAL | 0x9
+ 498:0 | 8498 | 70          ; #d8 OP_JMP_FWD
+ 499:0 | 8499 | a2 84       ; #d16 le(brace_close_03_010`16)
+ 49b:0 | 849b |             ; brace_open_03_010:
+ 49b:0 | 849b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 49c:0 | 849c | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 49d:0 | 849d | 11          ; #d8 (OP_INC_PTR | 0x1
+ 49e:0 | 849e | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 49f:0 | 849f | 80          ; #d8 OP_JMP_BCK
+ 4a0:0 | 84a0 | 9b 84       ; #d16 le(brace_open_03_010`16)
+ 4a2:0 | 84a2 |             ; brace_close_03_010:
+ 4a2:0 | 84a2 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 4a3:0 | 84a3 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 4a4:0 | 84a4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4a5:0 | 84a5 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 4a6:0 | 84a6 | 70          ; #d8 OP_JMP_FWD
+ 4a7:0 | 84a7 | b0 84       ; #d16 le(brace_close_03_011`16)
+ 4a9:0 | 84a9 |             ; brace_open_03_011:
+ 4a9:0 | 84a9 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 4aa:0 | 84aa | 35          ; #d8 (OP_INC_VAL | 0x5
+ 4ab:0 | 84ab | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4ac:0 | 84ac | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4ad:0 | 84ad | 80          ; #d8 OP_JMP_BCK
+ 4ae:0 | 84ae | a9 84       ; #d16 le(brace_open_03_011`16)
+ 4b0:0 | 84b0 |             ; brace_close_03_011:
+ 4b0:0 | 84b0 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 4b1:0 | 84b1 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 4b2:0 | 84b2 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 4b3:0 | 84b3 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ 4b4:0 | 84b4 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 4b5:0 | 84b5 | 4b          ; #d8 (OP_DEC_VAL | 0xB
+ 4b6:0 | 84b6 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 4b7:0 | 84b7 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 4b8:0 | 84b8 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 4b9:0 | 84b9 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 4ba:0 | 84ba | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 4bb:0 | 84bb | 70          ; #d8 OP_JMP_FWD
+ 4bc:0 | 84bc | c2 84       ; #d16 le(brace_close_03_012`16)
+ 4be:0 | 84be |             ; brace_open_03_012:
+ 4be:0 | 84be | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4bf:0 | 84bf | 80          ; #d8 OP_JMP_BCK
+ 4c0:0 | 84c0 | be 84       ; #d16 le(brace_open_03_012`16)
+ 4c2:0 | 84c2 |             ; brace_close_03_012:
+ 4c2:0 | 84c2 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 4c3:0 | 84c3 | 70          ; #d8 OP_JMP_FWD
+ 4c4:0 | 84c4 | ca 84       ; #d16 le(brace_close_03_013`16)
+ 4c6:0 | 84c6 |             ; brace_open_03_013:
+ 4c6:0 | 84c6 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4c7:0 | 84c7 | 80          ; #d8 OP_JMP_BCK
+ 4c8:0 | 84c8 | c6 84       ; #d16 le(brace_open_03_013`16)
+ 4ca:0 | 84ca |             ; brace_close_03_013:
+ 4ca:0 | 84ca | 80          ; #d8 OP_JMP_BCK
+ 4cb:0 | 84cb | 87 84       ; #d16 le(brace_open_02_015`16)
+ 4cd:0 | 84cd |             ; brace_close_02_015:
+ 4cd:0 | 84cd | 23          ; #d8 (OP_DEC_PTR | 0x3
+ 4ce:0 | 84ce | 70          ; #d8 OP_JMP_FWD
+ 4cf:0 | 84cf | d5 84       ; #d16 le(brace_close_02_016`16)
+ 4d1:0 | 84d1 |             ; brace_open_02_016:
+ 4d1:0 | 84d1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4d2:0 | 84d2 | 80          ; #d8 OP_JMP_BCK
+ 4d3:0 | 84d3 | d1 84       ; #d16 le(brace_open_02_016`16)
+ 4d5:0 | 84d5 |             ; brace_close_02_016:
+ 4d5:0 | 84d5 | 80          ; #d8 OP_JMP_BCK
+ 4d6:0 | 84d6 | 06 84       ; #d16 le(brace_open_01_014`16)
+ 4d8:0 | 84d8 |             ; brace_close_01_014:
+ 4d8:0 | 84d8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4d9:0 | 84d9 | 70          ; #d8 OP_JMP_FWD
+ 4da:0 | 84da | e0 84       ; #d16 le(brace_close_01_015`16)
+ 4dc:0 | 84dc |             ; brace_open_01_015:
+ 4dc:0 | 84dc | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4dd:0 | 84dd | 80          ; #d8 OP_JMP_BCK
+ 4de:0 | 84de | dc 84       ; #d16 le(brace_open_01_015`16)
+ 4e0:0 | 84e0 |             ; brace_close_01_015:
+ 4e0:0 | 84e0 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 4e1:0 | 84e1 | 80          ; #d8 OP_JMP_BCK
+ 4e2:0 | 84e2 | 64 83       ; #d16 le(brace_open_00_008`16)
+ 4e4:0 | 84e4 |             ; brace_close_00_008:
+ 4e4:0 | 84e4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4e5:0 | 84e5 | 70          ; #d8 OP_JMP_FWD
+ 4e6:0 | 84e6 | f9 86       ; #d16 le(brace_close_00_009`16)
+ 4e8:0 | 84e8 |             ; brace_open_00_009:
+ 4e8:0 | 84e8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4e9:0 | 84e9 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 4ea:0 | 84ea | 70          ; #d8 OP_JMP_FWD
+ 4eb:0 | 84eb | f4 84       ; #d16 le(brace_close_01_016`16)
+ 4ed:0 | 84ed |             ; brace_open_01_016:
+ 4ed:0 | 84ed | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4ee:0 | 84ee | 34          ; #d8 (OP_INC_VAL | 0x4
+ 4ef:0 | 84ef | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 4f0:0 | 84f0 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4f1:0 | 84f1 | 80          ; #d8 OP_JMP_BCK
+ 4f2:0 | 84f2 | ed 84       ; #d16 le(brace_open_01_016`16)
+ 4f4:0 | 84f4 |             ; brace_close_01_016:
+ 4f4:0 | 84f4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4f5:0 | 84f5 | 70          ; #d8 OP_JMP_FWD
+ 4f6:0 | 84f6 | ff 84       ; #d16 le(brace_close_01_017`16)
+ 4f8:0 | 84f8 |             ; brace_open_01_017:
+ 4f8:0 | 84f8 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 4f9:0 | 84f9 | 3d          ; #d8 (OP_INC_VAL | 0xD
+ 4fa:0 | 84fa | 11          ; #d8 (OP_INC_PTR | 0x1
+ 4fb:0 | 84fb | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 4fc:0 | 84fc | 80          ; #d8 OP_JMP_BCK
+ 4fd:0 | 84fd | f8 84       ; #d16 le(brace_open_01_017`16)
+ 4ff:0 | 84ff |             ; brace_close_01_017:
+ 4ff:0 | 84ff | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 500:0 | 8500 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 501:0 | 8501 | 70          ; #d8 OP_JMP_FWD
+ 502:0 | 8502 | 5f 85       ; #d16 le(brace_close_01_018`16)
+ 504:0 | 8504 |             ; brace_open_01_018:
+ 504:0 | 8504 | 70          ; #d8 OP_JMP_FWD
+ 505:0 | 8505 | 0b 85       ; #d16 le(brace_close_02_017`16)
+ 507:0 | 8507 |             ; brace_open_02_017:
+ 507:0 | 8507 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 508:0 | 8508 | 80          ; #d8 OP_JMP_BCK
+ 509:0 | 8509 | 07 85       ; #d16 le(brace_open_02_017`16)
+ 50b:0 | 850b |             ; brace_close_02_017:
+ 50b:0 | 850b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 50c:0 | 850c | 70          ; #d8 OP_JMP_FWD
+ 50d:0 | 850d | 13 85       ; #d16 le(brace_close_02_018`16)
+ 50f:0 | 850f |             ; brace_open_02_018:
+ 50f:0 | 850f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 510:0 | 8510 | 80          ; #d8 OP_JMP_BCK
+ 511:0 | 8511 | 0f 85       ; #d16 le(brace_open_02_018`16)
+ 513:0 | 8513 |             ; brace_close_02_018:
+ 513:0 | 8513 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 514:0 | 8514 | 70          ; #d8 OP_JMP_FWD
+ 515:0 | 8515 | 1e 85       ; #d16 le(brace_close_02_019`16)
+ 517:0 | 8517 |             ; brace_open_02_019:
+ 517:0 | 8517 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 518:0 | 8518 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 519:0 | 8519 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 51a:0 | 851a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 51b:0 | 851b | 80          ; #d8 OP_JMP_BCK
+ 51c:0 | 851c | 17 85       ; #d16 le(brace_open_02_019`16)
+ 51e:0 | 851e |             ; brace_close_02_019:
+ 51e:0 | 851e | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 51f:0 | 851f | 32          ; #d8 (OP_INC_VAL | 0x2
+ 520:0 | 8520 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 521:0 | 8521 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 522:0 | 8522 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 523:0 | 8523 | 70          ; #d8 OP_JMP_FWD
+ 524:0 | 8524 | 2d 85       ; #d16 le(brace_close_02_020`16)
+ 526:0 | 8526 |             ; brace_open_02_020:
+ 526:0 | 8526 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 527:0 | 8527 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 528:0 | 8528 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 529:0 | 8529 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 52a:0 | 852a | 80          ; #d8 OP_JMP_BCK
+ 52b:0 | 852b | 26 85       ; #d16 le(brace_open_02_020`16)
+ 52d:0 | 852d |             ; brace_close_02_020:
+ 52d:0 | 852d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 52e:0 | 852e | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 52f:0 | 852f | 11          ; #d8 (OP_INC_PTR | 0x1
+ 530:0 | 8530 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 531:0 | 8531 | 70          ; #d8 OP_JMP_FWD
+ 532:0 | 8532 | 3b 85       ; #d16 le(brace_close_02_021`16)
+ 534:0 | 8534 |             ; brace_open_02_021:
+ 534:0 | 8534 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 535:0 | 8535 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 536:0 | 8536 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 537:0 | 8537 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 538:0 | 8538 | 80          ; #d8 OP_JMP_BCK
+ 539:0 | 8539 | 34 85       ; #d16 le(brace_open_02_021`16)
+ 53b:0 | 853b |             ; brace_close_02_021:
+ 53b:0 | 853b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 53c:0 | 853c | 35          ; #d8 (OP_INC_VAL | 0x5
+ 53d:0 | 853d | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 53e:0 | 853e | 11          ; #d8 (OP_INC_PTR | 0x1
+ 53f:0 | 853f | 34          ; #d8 (OP_INC_VAL | 0x4
+ 540:0 | 8540 | 70          ; #d8 OP_JMP_FWD
+ 541:0 | 8541 | 4a 85       ; #d16 le(brace_close_02_022`16)
+ 543:0 | 8543 |             ; brace_open_02_022:
+ 543:0 | 8543 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 544:0 | 8544 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 545:0 | 8545 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 546:0 | 8546 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 547:0 | 8547 | 80          ; #d8 OP_JMP_BCK
+ 548:0 | 8548 | 43 85       ; #d16 le(brace_open_02_022`16)
+ 54a:0 | 854a |             ; brace_close_02_022:
+ 54a:0 | 854a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 54b:0 | 854b | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 54c:0 | 854c | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 54d:0 | 854d | 32          ; #d8 (OP_INC_VAL | 0x2
+ 54e:0 | 854e | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 54f:0 | 854f | 38          ; #d8 (OP_INC_VAL | 0x8
+ 550:0 | 8550 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 551:0 | 8551 | 46          ; #d8 (OP_DEC_VAL | 0x6
+ 552:0 | 8552 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 553:0 | 8553 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 554:0 | 8554 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 555:0 | 8555 | 70          ; #d8 OP_JMP_FWD
+ 556:0 | 8556 | 5c 85       ; #d16 le(brace_close_02_023`16)
+ 558:0 | 8558 |             ; brace_open_02_023:
+ 558:0 | 8558 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 559:0 | 8559 | 80          ; #d8 OP_JMP_BCK
+ 55a:0 | 855a | 58 85       ; #d16 le(brace_open_02_023`16)
+ 55c:0 | 855c |             ; brace_close_02_023:
+ 55c:0 | 855c | 80          ; #d8 OP_JMP_BCK
+ 55d:0 | 855d | 04 85       ; #d16 le(brace_open_01_018`16)
+ 55f:0 | 855f |             ; brace_close_01_018:
+ 55f:0 | 855f | 32          ; #d8 (OP_INC_VAL | 0x2
+ 560:0 | 8560 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 561:0 | 8561 | 70          ; #d8 OP_JMP_FWD
+ 562:0 | 8562 | 68 85       ; #d16 le(brace_close_01_019`16)
+ 564:0 | 8564 |             ; brace_open_01_019:
+ 564:0 | 8564 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 565:0 | 8565 | 80          ; #d8 OP_JMP_BCK
+ 566:0 | 8566 | 64 85       ; #d16 le(brace_open_01_019`16)
+ 568:0 | 8568 |             ; brace_close_01_019:
+ 568:0 | 8568 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 569:0 | 8569 | 70          ; #d8 OP_JMP_FWD
+ 56a:0 | 856a | 73 85       ; #d16 le(brace_close_01_020`16)
+ 56c:0 | 856c |             ; brace_open_01_020:
+ 56c:0 | 856c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 56d:0 | 856d | 36          ; #d8 (OP_INC_VAL | 0x6
+ 56e:0 | 856e | 11          ; #d8 (OP_INC_PTR | 0x1
+ 56f:0 | 856f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 570:0 | 8570 | 80          ; #d8 OP_JMP_BCK
+ 571:0 | 8571 | 6c 85       ; #d16 le(brace_open_01_020`16)
+ 573:0 | 8573 |             ; brace_close_01_020:
+ 573:0 | 8573 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 574:0 | 8574 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 575:0 | 8575 | 70          ; #d8 OP_JMP_FWD
+ 576:0 | 8576 | 7c 85       ; #d16 le(brace_close_01_021`16)
+ 578:0 | 8578 |             ; brace_open_01_021:
+ 578:0 | 8578 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 579:0 | 8579 | 80          ; #d8 OP_JMP_BCK
+ 57a:0 | 857a | 78 85       ; #d16 le(brace_open_01_021`16)
+ 57c:0 | 857c |             ; brace_close_01_021:
+ 57c:0 | 857c | 11          ; #d8 (OP_INC_PTR | 0x1
+ 57d:0 | 857d | 32          ; #d8 (OP_INC_VAL | 0x2
+ 57e:0 | 857e | 70          ; #d8 OP_JMP_FWD
+ 57f:0 | 857f | 88 85       ; #d16 le(brace_close_01_022`16)
+ 581:0 | 8581 |             ; brace_open_01_022:
+ 581:0 | 8581 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 582:0 | 8582 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 583:0 | 8583 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 584:0 | 8584 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 585:0 | 8585 | 80          ; #d8 OP_JMP_BCK
+ 586:0 | 8586 | 81 85       ; #d16 le(brace_open_01_022`16)
+ 588:0 | 8588 |             ; brace_close_01_022:
+ 588:0 | 8588 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 589:0 | 8589 | 70          ; #d8 OP_JMP_FWD
+ 58a:0 | 858a | b0 85       ; #d16 le(brace_close_01_023`16)
+ 58c:0 | 858c |             ; brace_open_01_023:
+ 58c:0 | 858c | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 58d:0 | 858d | 31          ; #d8 (OP_INC_VAL | 0x1
+ 58e:0 | 858e | 12          ; #d8 (OP_INC_PTR | 0x2
+ 58f:0 | 858f | 70          ; #d8 OP_JMP_FWD
+ 590:0 | 8590 | ad 85       ; #d16 le(brace_close_02_024`16)
+ 592:0 | 8592 |             ; brace_open_02_024:
+ 592:0 | 8592 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 593:0 | 8593 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 594:0 | 8594 | 70          ; #d8 OP_JMP_FWD
+ 595:0 | 8595 | 9e 85       ; #d16 le(brace_close_03_014`16)
+ 597:0 | 8597 |             ; brace_open_03_014:
+ 597:0 | 8597 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 598:0 | 8598 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 599:0 | 8599 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 59a:0 | 859a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 59b:0 | 859b | 80          ; #d8 OP_JMP_BCK
+ 59c:0 | 859c | 97 85       ; #d16 le(brace_open_03_014`16)
+ 59e:0 | 859e |             ; brace_close_03_014:
+ 59e:0 | 859e | 11          ; #d8 (OP_INC_PTR | 0x1
+ 59f:0 | 859f | 70          ; #d8 OP_JMP_FWD
+ 5a0:0 | 85a0 | a9 85       ; #d16 le(brace_close_03_015`16)
+ 5a2:0 | 85a2 |             ; brace_open_03_015:
+ 5a2:0 | 85a2 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5a3:0 | 85a3 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 5a4:0 | 85a4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5a5:0 | 85a5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 5a6:0 | 85a6 | 80          ; #d8 OP_JMP_BCK
+ 5a7:0 | 85a7 | a2 85       ; #d16 le(brace_open_03_015`16)
+ 5a9:0 | 85a9 |             ; brace_close_03_015:
+ 5a9:0 | 85a9 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5aa:0 | 85aa | 80          ; #d8 OP_JMP_BCK
+ 5ab:0 | 85ab | 92 85       ; #d16 le(brace_open_02_024`16)
+ 5ad:0 | 85ad |             ; brace_close_02_024:
+ 5ad:0 | 85ad | 80          ; #d8 OP_JMP_BCK
+ 5ae:0 | 85ae | 8c 85       ; #d16 le(brace_open_01_023`16)
+ 5b0:0 | 85b0 |             ; brace_close_01_023:
+ 5b0:0 | 85b0 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 5b1:0 | 85b1 | 70          ; #d8 OP_JMP_FWD
+ 5b2:0 | 85b2 | fc 85       ; #d16 le(brace_close_01_024`16)
+ 5b4:0 | 85b4 |             ; brace_open_01_024:
+ 5b4:0 | 85b4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5b5:0 | 85b5 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 5b6:0 | 85b6 | 70          ; #d8 OP_JMP_FWD
+ 5b7:0 | 85b7 | c0 85       ; #d16 le(brace_close_02_025`16)
+ 5b9:0 | 85b9 |             ; brace_open_02_025:
+ 5b9:0 | 85b9 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5ba:0 | 85ba | 43          ; #d8 (OP_DEC_VAL | 0x3
+ 5bb:0 | 85bb | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5bc:0 | 85bc | 34          ; #d8 (OP_INC_VAL | 0x4
+ 5bd:0 | 85bd | 80          ; #d8 OP_JMP_BCK
+ 5be:0 | 85be | b9 85       ; #d16 le(brace_open_02_025`16)
+ 5c0:0 | 85c0 |             ; brace_close_02_025:
+ 5c0:0 | 85c0 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5c1:0 | 85c1 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 5c2:0 | 85c2 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 5c3:0 | 85c3 | 70          ; #d8 OP_JMP_FWD
+ 5c4:0 | 85c4 | cd 85       ; #d16 le(brace_close_02_026`16)
+ 5c6:0 | 85c6 |             ; brace_open_02_026:
+ 5c6:0 | 85c6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5c7:0 | 85c7 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 5c8:0 | 85c8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5c9:0 | 85c9 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 5ca:0 | 85ca | 80          ; #d8 OP_JMP_BCK
+ 5cb:0 | 85cb | c6 85       ; #d16 le(brace_open_02_026`16)
+ 5cd:0 | 85cd |             ; brace_close_02_026:
+ 5cd:0 | 85cd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5ce:0 | 85ce | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 5cf:0 | 85cf | 70          ; #d8 OP_JMP_FWD
+ 5d0:0 | 85d0 | d9 85       ; #d16 le(brace_close_02_027`16)
+ 5d2:0 | 85d2 |             ; brace_open_02_027:
+ 5d2:0 | 85d2 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5d3:0 | 85d3 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 5d4:0 | 85d4 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5d5:0 | 85d5 | 46          ; #d8 (OP_DEC_VAL | 0x6
+ 5d6:0 | 85d6 | 80          ; #d8 OP_JMP_BCK
+ 5d7:0 | 85d7 | d2 85       ; #d16 le(brace_open_02_027`16)
+ 5d9:0 | 85d9 |             ; brace_close_02_027:
+ 5d9:0 | 85d9 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5da:0 | 85da | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 5db:0 | 85db | 33          ; #d8 (OP_INC_VAL | 0x3
+ 5dc:0 | 85dc | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 5dd:0 | 85dd | 70          ; #d8 OP_JMP_FWD
+ 5de:0 | 85de | e7 85       ; #d16 le(brace_close_02_028`16)
+ 5e0:0 | 85e0 |             ; brace_open_02_028:
+ 5e0:0 | 85e0 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5e1:0 | 85e1 | 43          ; #d8 (OP_DEC_VAL | 0x3
+ 5e2:0 | 85e2 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 5e3:0 | 85e3 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 5e4:0 | 85e4 | 80          ; #d8 OP_JMP_BCK
+ 5e5:0 | 85e5 | e0 85       ; #d16 le(brace_open_02_028`16)
+ 5e7:0 | 85e7 |             ; brace_close_02_028:
+ 5e7:0 | 85e7 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5e8:0 | 85e8 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ 5e9:0 | 85e9 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 5ea:0 | 85ea | 70          ; #d8 OP_JMP_FWD
+ 5eb:0 | 85eb | f1 85       ; #d16 le(brace_close_02_029`16)
+ 5ed:0 | 85ed |             ; brace_open_02_029:
+ 5ed:0 | 85ed | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 5ee:0 | 85ee | 80          ; #d8 OP_JMP_BCK
+ 5ef:0 | 85ef | ed 85       ; #d16 le(brace_open_02_029`16)
+ 5f1:0 | 85f1 |             ; brace_close_02_029:
+ 5f1:0 | 85f1 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 5f2:0 | 85f2 | 70          ; #d8 OP_JMP_FWD
+ 5f3:0 | 85f3 | f9 85       ; #d16 le(brace_close_02_030`16)
+ 5f5:0 | 85f5 |             ; brace_open_02_030:
+ 5f5:0 | 85f5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 5f6:0 | 85f6 | 80          ; #d8 OP_JMP_BCK
+ 5f7:0 | 85f7 | f5 85       ; #d16 le(brace_open_02_030`16)
+ 5f9:0 | 85f9 |             ; brace_close_02_030:
+ 5f9:0 | 85f9 | 80          ; #d8 OP_JMP_BCK
+ 5fa:0 | 85fa | b4 85       ; #d16 le(brace_open_01_024`16)
+ 5fc:0 | 85fc |             ; brace_close_01_024:
+ 5fc:0 | 85fc | 70          ; #d8 OP_JMP_FWD
+ 5fd:0 | 85fd | 03 86       ; #d16 le(brace_close_01_025`16)
+ 5ff:0 | 85ff |             ; brace_open_01_025:
+ 5ff:0 | 85ff | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 600:0 | 8600 | 80          ; #d8 OP_JMP_BCK
+ 601:0 | 8601 | ff 85       ; #d16 le(brace_open_01_025`16)
+ 603:0 | 8603 |             ; brace_close_01_025:
+ 603:0 | 8603 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 604:0 | 8604 | 70          ; #d8 OP_JMP_FWD
+ 605:0 | 8605 | 0b 86       ; #d16 le(brace_close_01_026`16)
+ 607:0 | 8607 |             ; brace_open_01_026:
+ 607:0 | 8607 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 608:0 | 8608 | 80          ; #d8 OP_JMP_BCK
+ 609:0 | 8609 | 07 86       ; #d16 le(brace_open_01_026`16)
+ 60b:0 | 860b |             ; brace_close_01_026:
+ 60b:0 | 860b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 60c:0 | 860c | 70          ; #d8 OP_JMP_FWD
+ 60d:0 | 860d | 13 86       ; #d16 le(brace_close_01_027`16)
+ 60f:0 | 860f |             ; brace_open_01_027:
+ 60f:0 | 860f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 610:0 | 8610 | 80          ; #d8 OP_JMP_BCK
+ 611:0 | 8611 | 0f 86       ; #d16 le(brace_open_01_027`16)
+ 613:0 | 8613 |             ; brace_close_01_027:
+ 613:0 | 8613 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 614:0 | 8614 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 615:0 | 8615 | 70          ; #d8 OP_JMP_FWD
+ 616:0 | 8616 | 1f 86       ; #d16 le(brace_close_01_028`16)
+ 618:0 | 8618 |             ; brace_open_01_028:
+ 618:0 | 8618 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 619:0 | 8619 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 61a:0 | 861a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 61b:0 | 861b | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 61c:0 | 861c | 80          ; #d8 OP_JMP_BCK
+ 61d:0 | 861d | 18 86       ; #d16 le(brace_open_01_028`16)
+ 61f:0 | 861f |             ; brace_close_01_028:
+ 61f:0 | 861f | 11          ; #d8 (OP_INC_PTR | 0x1
+ 620:0 | 8620 | 70          ; #d8 OP_JMP_FWD
+ 621:0 | 8621 | 2a 86       ; #d16 le(brace_close_01_029`16)
+ 623:0 | 8623 |             ; brace_open_01_029:
+ 623:0 | 8623 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 624:0 | 8624 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 625:0 | 8625 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 626:0 | 8626 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 627:0 | 8627 | 80          ; #d8 OP_JMP_BCK
+ 628:0 | 8628 | 23 86       ; #d16 le(brace_open_01_029`16)
+ 62a:0 | 862a |             ; brace_close_01_029:
+ 62a:0 | 862a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 62b:0 | 862b | 70          ; #d8 OP_JMP_FWD
+ 62c:0 | 862c | 35 86       ; #d16 le(brace_close_01_030`16)
+ 62e:0 | 862e |             ; brace_open_01_030:
+ 62e:0 | 862e | 11          ; #d8 (OP_INC_PTR | 0x1
+ 62f:0 | 862f | 38          ; #d8 (OP_INC_VAL | 0x8
+ 630:0 | 8630 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 631:0 | 8631 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 632:0 | 8632 | 80          ; #d8 OP_JMP_BCK
+ 633:0 | 8633 | 2e 86       ; #d16 le(brace_open_01_030`16)
+ 635:0 | 8635 |             ; brace_close_01_030:
+ 635:0 | 8635 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 636:0 | 8636 | 70          ; #d8 OP_JMP_FWD
+ 637:0 | 8637 | 40 86       ; #d16 le(brace_close_01_031`16)
+ 639:0 | 8639 |             ; brace_open_01_031:
+ 639:0 | 8639 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 63a:0 | 863a | 38          ; #d8 (OP_INC_VAL | 0x8
+ 63b:0 | 863b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 63c:0 | 863c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 63d:0 | 863d | 80          ; #d8 OP_JMP_BCK
+ 63e:0 | 863e | 39 86       ; #d16 le(brace_open_01_031`16)
+ 640:0 | 8640 |             ; brace_close_01_031:
+ 640:0 | 8640 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 641:0 | 8641 | 70          ; #d8 OP_JMP_FWD
+ 642:0 | 8642 | 4b 86       ; #d16 le(brace_close_01_032`16)
+ 644:0 | 8644 |             ; brace_open_01_032:
+ 644:0 | 8644 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 645:0 | 8645 | 38          ; #d8 (OP_INC_VAL | 0x8
+ 646:0 | 8646 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 647:0 | 8647 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 648:0 | 8648 | 80          ; #d8 OP_JMP_BCK
+ 649:0 | 8649 | 44 86       ; #d16 le(brace_open_01_032`16)
+ 64b:0 | 864b |             ; brace_close_01_032:
+ 64b:0 | 864b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 64c:0 | 864c | 70          ; #d8 OP_JMP_FWD
+ 64d:0 | 864d | a4 86       ; #d16 le(brace_close_01_033`16)
+ 64f:0 | 864f |             ; brace_open_01_033:
+ 64f:0 | 864f | 70          ; #d8 OP_JMP_FWD
+ 650:0 | 8650 | 56 86       ; #d16 le(brace_close_02_031`16)
+ 652:0 | 8652 |             ; brace_open_02_031:
+ 652:0 | 8652 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 653:0 | 8653 | 80          ; #d8 OP_JMP_BCK
+ 654:0 | 8654 | 52 86       ; #d16 le(brace_open_02_031`16)
+ 656:0 | 8656 |             ; brace_close_02_031:
+ 656:0 | 8656 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 657:0 | 8657 | 70          ; #d8 OP_JMP_FWD
+ 658:0 | 8658 | 5e 86       ; #d16 le(brace_close_02_032`16)
+ 65a:0 | 865a |             ; brace_open_02_032:
+ 65a:0 | 865a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 65b:0 | 865b | 80          ; #d8 OP_JMP_BCK
+ 65c:0 | 865c | 5a 86       ; #d16 le(brace_open_02_032`16)
+ 65e:0 | 865e |             ; brace_close_02_032:
+ 65e:0 | 865e | 39          ; #d8 (OP_INC_VAL | 0x9
+ 65f:0 | 865f | 70          ; #d8 OP_JMP_FWD
+ 660:0 | 8660 | 69 86       ; #d16 le(brace_close_02_033`16)
+ 662:0 | 8662 |             ; brace_open_02_033:
+ 662:0 | 8662 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 663:0 | 8663 | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 664:0 | 8664 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 665:0 | 8665 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 666:0 | 8666 | 80          ; #d8 OP_JMP_BCK
+ 667:0 | 8667 | 62 86       ; #d16 le(brace_open_02_033`16)
+ 669:0 | 8669 |             ; brace_close_02_033:
+ 669:0 | 8669 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 66a:0 | 866a | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 66b:0 | 866b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 66c:0 | 866c | 34          ; #d8 (OP_INC_VAL | 0x4
+ 66d:0 | 866d | 70          ; #d8 OP_JMP_FWD
+ 66e:0 | 866e | 77 86       ; #d16 le(brace_close_02_034`16)
+ 670:0 | 8670 |             ; brace_open_02_034:
+ 670:0 | 8670 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 671:0 | 8671 | 35          ; #d8 (OP_INC_VAL | 0x5
+ 672:0 | 8672 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 673:0 | 8673 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 674:0 | 8674 | 80          ; #d8 OP_JMP_BCK
+ 675:0 | 8675 | 70 86       ; #d16 le(brace_open_02_034`16)
+ 677:0 | 8677 |             ; brace_close_02_034:
+ 677:0 | 8677 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 678:0 | 8678 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 679:0 | 8679 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 67a:0 | 867a | 42          ; #d8 (OP_DEC_VAL | 0x2
+ 67b:0 | 867b | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 67c:0 | 867c | 4b          ; #d8 (OP_DEC_VAL | 0xB
+ 67d:0 | 867d | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 67e:0 | 867e | 37          ; #d8 (OP_INC_VAL | 0x7
+ 67f:0 | 867f | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 680:0 | 8680 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 681:0 | 8681 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 682:0 | 8682 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 683:0 | 8683 | 70          ; #d8 OP_JMP_FWD
+ 684:0 | 8684 | 8a 86       ; #d16 le(brace_close_02_035`16)
+ 686:0 | 8686 |             ; brace_open_02_035:
+ 686:0 | 8686 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 687:0 | 8687 | 80          ; #d8 OP_JMP_BCK
+ 688:0 | 8688 | 86 86       ; #d16 le(brace_open_02_035`16)
+ 68a:0 | 868a |             ; brace_close_02_035:
+ 68a:0 | 868a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 68b:0 | 868b | 35          ; #d8 (OP_INC_VAL | 0x5
+ 68c:0 | 868c | 70          ; #d8 OP_JMP_FWD
+ 68d:0 | 868d | 96 86       ; #d16 le(brace_close_02_036`16)
+ 68f:0 | 868f |             ; brace_open_02_036:
+ 68f:0 | 868f | 11          ; #d8 (OP_INC_PTR | 0x1
+ 690:0 | 8690 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 691:0 | 8691 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 692:0 | 8692 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 693:0 | 8693 | 80          ; #d8 OP_JMP_BCK
+ 694:0 | 8694 | 8f 86       ; #d16 le(brace_open_02_036`16)
+ 696:0 | 8696 |             ; brace_close_02_036:
+ 696:0 | 8696 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 697:0 | 8697 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 698:0 | 8698 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 699:0 | 8699 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 69a:0 | 869a | 70          ; #d8 OP_JMP_FWD
+ 69b:0 | 869b | a1 86       ; #d16 le(brace_close_02_037`16)
+ 69d:0 | 869d |             ; brace_open_02_037:
+ 69d:0 | 869d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 69e:0 | 869e | 80          ; #d8 OP_JMP_BCK
+ 69f:0 | 869f | 9d 86       ; #d16 le(brace_open_02_037`16)
+ 6a1:0 | 86a1 |             ; brace_close_02_037:
+ 6a1:0 | 86a1 | 80          ; #d8 OP_JMP_BCK
+ 6a2:0 | 86a2 | 4f 86       ; #d16 le(brace_open_01_033`16)
+ 6a4:0 | 86a4 |             ; brace_close_01_033:
+ 6a4:0 | 86a4 | 70          ; #d8 OP_JMP_FWD
+ 6a5:0 | 86a5 | ab 86       ; #d16 le(brace_close_01_034`16)
+ 6a7:0 | 86a7 |             ; brace_open_01_034:
+ 6a7:0 | 86a7 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6a8:0 | 86a8 | 80          ; #d8 OP_JMP_BCK
+ 6a9:0 | 86a9 | a7 86       ; #d16 le(brace_open_01_034`16)
+ 6ab:0 | 86ab |             ; brace_close_01_034:
+ 6ab:0 | 86ab | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6ac:0 | 86ac | 70          ; #d8 OP_JMP_FWD
+ 6ad:0 | 86ad | bc 86       ; #d16 le(brace_close_01_035`16)
+ 6af:0 | 86af |             ; brace_open_01_035:
+ 6af:0 | 86af | 11          ; #d8 (OP_INC_PTR | 0x1
+ 6b0:0 | 86b0 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 6b1:0 | 86b1 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6b2:0 | 86b2 | 70          ; #d8 OP_JMP_FWD
+ 6b3:0 | 86b3 | b9 86       ; #d16 le(brace_close_02_038`16)
+ 6b5:0 | 86b5 |             ; brace_open_02_038:
+ 6b5:0 | 86b5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6b6:0 | 86b6 | 80          ; #d8 OP_JMP_BCK
+ 6b7:0 | 86b7 | b5 86       ; #d16 le(brace_open_02_038`16)
+ 6b9:0 | 86b9 |             ; brace_close_02_038:
+ 6b9:0 | 86b9 | 80          ; #d8 OP_JMP_BCK
+ 6ba:0 | 86ba | af 86       ; #d16 le(brace_open_01_035`16)
+ 6bc:0 | 86bc |             ; brace_close_01_035:
+ 6bc:0 | 86bc | 11          ; #d8 (OP_INC_PTR | 0x1
+ 6bd:0 | 86bd | 35          ; #d8 (OP_INC_VAL | 0x5
+ 6be:0 | 86be | 11          ; #d8 (OP_INC_PTR | 0x1
+ 6bf:0 | 86bf | 70          ; #d8 OP_JMP_FWD
+ 6c0:0 | 86c0 | c6 86       ; #d16 le(brace_close_01_036`16)
+ 6c2:0 | 86c2 |             ; brace_open_01_036:
+ 6c2:0 | 86c2 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6c3:0 | 86c3 | 80          ; #d8 OP_JMP_BCK
+ 6c4:0 | 86c4 | c2 86       ; #d16 le(brace_open_01_036`16)
+ 6c6:0 | 86c6 |             ; brace_close_01_036:
+ 6c6:0 | 86c6 | 39          ; #d8 (OP_INC_VAL | 0x9
+ 6c7:0 | 86c7 | 70          ; #d8 OP_JMP_FWD
+ 6c8:0 | 86c8 | d1 86       ; #d16 le(brace_close_01_037`16)
+ 6ca:0 | 86ca |             ; brace_open_01_037:
+ 6ca:0 | 86ca | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6cb:0 | 86cb | 39          ; #d8 (OP_INC_VAL | 0x9
+ 6cc:0 | 86cc | 11          ; #d8 (OP_INC_PTR | 0x1
+ 6cd:0 | 86cd | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6ce:0 | 86ce | 80          ; #d8 OP_JMP_BCK
+ 6cf:0 | 86cf | ca 86       ; #d16 le(brace_open_01_037`16)
+ 6d1:0 | 86d1 |             ; brace_close_01_037:
+ 6d1:0 | 86d1 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6d2:0 | 86d2 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 6d3:0 | 86d3 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 6d4:0 | 86d4 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 6d5:0 | 86d5 | 70          ; #d8 OP_JMP_FWD
+ 6d6:0 | 86d6 | df 86       ; #d16 le(brace_close_01_038`16)
+ 6d8:0 | 86d8 |             ; brace_open_01_038:
+ 6d8:0 | 86d8 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6d9:0 | 86d9 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 6da:0 | 86da | 11          ; #d8 (OP_INC_PTR | 0x1
+ 6db:0 | 86db | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6dc:0 | 86dc | 80          ; #d8 OP_JMP_BCK
+ 6dd:0 | 86dd | d8 86       ; #d16 le(brace_open_01_038`16)
+ 6df:0 | 86df |             ; brace_close_01_038:
+ 6df:0 | 86df | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6e0:0 | 86e0 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 6e1:0 | 86e1 | 33          ; #d8 (OP_INC_VAL | 0x3
+ 6e2:0 | 86e2 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 6e3:0 | 86e3 | 46          ; #d8 (OP_DEC_VAL | 0x6
+ 6e4:0 | 86e4 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 6e5:0 | 86e5 | 48          ; #d8 (OP_DEC_VAL | 0x8
+ 6e6:0 | 86e6 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 6e7:0 | 86e7 | 70          ; #d8 OP_JMP_FWD
+ 6e8:0 | 86e8 | ee 86       ; #d16 le(brace_close_01_039`16)
+ 6ea:0 | 86ea |             ; brace_open_01_039:
+ 6ea:0 | 86ea | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6eb:0 | 86eb | 80          ; #d8 OP_JMP_BCK
+ 6ec:0 | 86ec | ea 86       ; #d16 le(brace_open_01_039`16)
+ 6ee:0 | 86ee |             ; brace_close_01_039:
+ 6ee:0 | 86ee | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6ef:0 | 86ef | 70          ; #d8 OP_JMP_FWD
+ 6f0:0 | 86f0 | f6 86       ; #d16 le(brace_close_01_040`16)
+ 6f2:0 | 86f2 |             ; brace_open_01_040:
+ 6f2:0 | 86f2 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 6f3:0 | 86f3 | 80          ; #d8 OP_JMP_BCK
+ 6f4:0 | 86f4 | f2 86       ; #d16 le(brace_open_01_040`16)
+ 6f6:0 | 86f6 |             ; brace_close_01_040:
+ 6f6:0 | 86f6 | 80          ; #d8 OP_JMP_BCK
+ 6f7:0 | 86f7 | e8 84       ; #d16 le(brace_open_00_009`16)
+ 6f9:0 | 86f9 |             ; brace_close_00_009:
+ 6f9:0 | 86f9 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 6fa:0 | 86fa | 31          ; #d8 (OP_INC_VAL | 0x1
+ 6fb:0 | 86fb | 70          ; #d8 OP_JMP_FWD
+ 6fc:0 | 86fc | 0a 87       ; #d16 le(brace_close_00_010`16)
+ 6fe:0 | 86fe |             ; brace_open_00_010:
+ 6fe:0 | 86fe | 70          ; #d8 OP_JMP_FWD
+ 6ff:0 | 86ff | 05 87       ; #d16 le(brace_close_01_041`16)
+ 701:0 | 8701 |             ; brace_open_01_041:
+ 701:0 | 8701 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 702:0 | 8702 | 80          ; #d8 OP_JMP_BCK
+ 703:0 | 8703 | 01 87       ; #d16 le(brace_open_01_041`16)
+ 705:0 | 8705 |             ; brace_close_01_041:
+ 705:0 | 8705 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 706:0 | 8706 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 707:0 | 8707 | 80          ; #d8 OP_JMP_BCK
+ 708:0 | 8708 | fe 86       ; #d16 le(brace_open_00_010`16)
+ 70a:0 | 870a |             ; brace_close_00_010:
+ 70a:0 | 870a | 12          ; #d8 (OP_INC_PTR | 0x2
+ 70b:0 | 870b | 70          ; #d8 OP_JMP_FWD
+ 70c:0 | 870c | 4b 87       ; #d16 le(brace_close_00_011`16)
+ 70e:0 | 870e |             ; brace_open_00_011:
+ 70e:0 | 870e | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 70f:0 | 870f | 70          ; #d8 OP_JMP_FWD
+ 710:0 | 8710 | 41 87       ; #d16 le(brace_close_01_042`16)
+ 712:0 | 8712 |             ; brace_open_01_042:
+ 712:0 | 8712 | 70          ; #d8 OP_JMP_FWD
+ 713:0 | 8713 | 3d 87       ; #d16 le(brace_close_02_039`16)
+ 715:0 | 8715 |             ; brace_open_02_039:
+ 715:0 | 8715 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 716:0 | 8716 | 70          ; #d8 OP_JMP_FWD
+ 717:0 | 8717 | 39 87       ; #d16 le(brace_close_03_016`16)
+ 719:0 | 8719 |             ; brace_open_03_016:
+ 719:0 | 8719 | 70          ; #d8 OP_JMP_FWD
+ 71a:0 | 871a | 35 87       ; #d16 le(brace_close_04_000`16)
+ 71c:0 | 871c |             ; brace_open_04_000:
+ 71c:0 | 871c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 71d:0 | 871d | 70          ; #d8 OP_JMP_FWD
+ 71e:0 | 871e | 31 87       ; #d16 le(brace_close_05_000`16)
+ 720:0 | 8720 |             ; brace_open_05_000:
+ 720:0 | 8720 | 70          ; #d8 OP_JMP_FWD
+ 721:0 | 8721 | 2e 87       ; #d16 le(brace_close_06_000`16)
+ 723:0 | 8723 |             ; brace_open_06_000:
+ 723:0 | 8723 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 724:0 | 8724 | 70          ; #d8 OP_JMP_FWD
+ 725:0 | 8725 | 2b 87       ; #d16 le(brace_close_07_000`16)
+ 727:0 | 8727 |             ; brace_open_07_000:
+ 727:0 | 8727 | 61          ; #d8 (OP_GET_VAL | 0x1
+ 728:0 | 8728 | 80          ; #d8 OP_JMP_BCK
+ 729:0 | 8729 | 27 87       ; #d16 le(brace_open_07_000`16)
+ 72b:0 | 872b |             ; brace_close_07_000:
+ 72b:0 | 872b | 80          ; #d8 OP_JMP_BCK
+ 72c:0 | 872c | 23 87       ; #d16 le(brace_open_06_000`16)
+ 72e:0 | 872e |             ; brace_close_06_000:
+ 72e:0 | 872e | 80          ; #d8 OP_JMP_BCK
+ 72f:0 | 872f | 20 87       ; #d16 le(brace_open_05_000`16)
+ 731:0 | 8731 |             ; brace_close_05_000:
+ 731:0 | 8731 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 732:0 | 8732 | 80          ; #d8 OP_JMP_BCK
+ 733:0 | 8733 | 1c 87       ; #d16 le(brace_open_04_000`16)
+ 735:0 | 8735 |             ; brace_close_04_000:
+ 735:0 | 8735 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 736:0 | 8736 | 80          ; #d8 OP_JMP_BCK
+ 737:0 | 8737 | 19 87       ; #d16 le(brace_open_03_016`16)
+ 739:0 | 8739 |             ; brace_close_03_016:
+ 739:0 | 8739 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 73a:0 | 873a | 80          ; #d8 OP_JMP_BCK
+ 73b:0 | 873b | 15 87       ; #d16 le(brace_open_02_039`16)
+ 73d:0 | 873d |             ; brace_close_02_039:
+ 73d:0 | 873d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 73e:0 | 873e | 80          ; #d8 OP_JMP_BCK
+ 73f:0 | 873f | 12 87       ; #d16 le(brace_open_01_042`16)
+ 741:0 | 8741 |             ; brace_close_01_042:
+ 741:0 | 8741 | 70          ; #d8 OP_JMP_FWD
+ 742:0 | 8742 | 48 87       ; #d16 le(brace_close_01_043`16)
+ 744:0 | 8744 |             ; brace_open_01_043:
+ 744:0 | 8744 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 745:0 | 8745 | 80          ; #d8 OP_JMP_BCK
+ 746:0 | 8746 | 44 87       ; #d16 le(brace_open_01_043`16)
+ 748:0 | 8748 |             ; brace_close_01_043:
+ 748:0 | 8748 | 80          ; #d8 OP_JMP_BCK
+ 749:0 | 8749 | 0e 87       ; #d16 le(brace_open_00_011`16)
+ 74b:0 | 874b |             ; brace_close_00_011:
+ 74b:0 | 874b | 31          ; #d8 (OP_INC_VAL | 0x1
+ 74c:0 | 874c | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 74d:0 | 874d | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 74e:0 | 874e | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 74f:0 | 874f | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 750:0 | 8750 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 751:0 | 8751 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 752:0 | 8752 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 753:0 | 8753 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 754:0 | 8754 | 18          ; #d8 (OP_INC_PTR | 0x8
+ 755:0 | 8755 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 756:0 | 8756 | 70          ; #d8 OP_JMP_FWD
+ 757:0 | 8757 | 5f 87       ; #d16 le(brace_close_00_012`16)
+ 759:0 | 8759 |             ; brace_open_00_012:
+ 759:0 | 8759 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 75a:0 | 875a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 75b:0 | 875b | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 75c:0 | 875c | 80          ; #d8 OP_JMP_BCK
+ 75d:0 | 875d | 59 87       ; #d16 le(brace_open_00_012`16)
+ 75f:0 | 875f |             ; brace_close_00_012:
+ 75f:0 | 875f | 33          ; #d8 (OP_INC_VAL | 0x3
+ 760:0 | 8760 | 70          ; #d8 OP_JMP_FWD
+ 761:0 | 8761 | 6a 87       ; #d16 le(brace_close_00_013`16)
+ 763:0 | 8763 |             ; brace_open_00_013:
+ 763:0 | 8763 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 764:0 | 8764 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 765:0 | 8765 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 766:0 | 8766 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 767:0 | 8767 | 80          ; #d8 OP_JMP_BCK
+ 768:0 | 8768 | 63 87       ; #d16 le(brace_open_00_013`16)
+ 76a:0 | 876a |             ; brace_close_00_013:
+ 76a:0 | 876a | 11          ; #d8 (OP_INC_PTR | 0x1
+ 76b:0 | 876b | 70          ; #d8 OP_JMP_FWD
+ 76c:0 | 876c | 75 87       ; #d16 le(brace_close_00_014`16)
+ 76e:0 | 876e |             ; brace_open_00_014:
+ 76e:0 | 876e | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 76f:0 | 876f | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 770:0 | 8770 | 37          ; #d8 (OP_INC_VAL | 0x7
+ 771:0 | 8771 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 772:0 | 8772 | 80          ; #d8 OP_JMP_BCK
+ 773:0 | 8773 | 6e 87       ; #d16 le(brace_open_00_014`16)
+ 775:0 | 8775 |             ; brace_close_00_014:
+ 775:0 | 8775 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 776:0 | 8776 | 70          ; #d8 OP_JMP_FWD
+ 777:0 | 8777 | 8e 87       ; #d16 le(brace_close_00_015`16)
+ 779:0 | 8779 |             ; brace_open_00_015:
+ 779:0 | 8779 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 77a:0 | 877a | 12          ; #d8 (OP_INC_PTR | 0x2
+ 77b:0 | 877b | 70          ; #d8 OP_JMP_FWD
+ 77c:0 | 877c | 82 87       ; #d16 le(brace_close_01_044`16)
+ 77e:0 | 877e |             ; brace_open_01_044:
+ 77e:0 | 877e | 11          ; #d8 (OP_INC_PTR | 0x1
+ 77f:0 | 877f | 80          ; #d8 OP_JMP_BCK
+ 780:0 | 8780 | 7e 87       ; #d16 le(brace_open_01_044`16)
+ 782:0 | 8782 |             ; brace_close_01_044:
+ 782:0 | 8782 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 783:0 | 8783 | 70          ; #d8 OP_JMP_FWD
+ 784:0 | 8784 | 8a 87       ; #d16 le(brace_close_01_045`16)
+ 786:0 | 8786 |             ; brace_open_01_045:
+ 786:0 | 8786 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 787:0 | 8787 | 80          ; #d8 OP_JMP_BCK
+ 788:0 | 8788 | 86 87       ; #d16 le(brace_open_01_045`16)
+ 78a:0 | 878a |             ; brace_close_01_045:
+ 78a:0 | 878a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 78b:0 | 878b | 80          ; #d8 OP_JMP_BCK
+ 78c:0 | 878c | 79 87       ; #d16 le(brace_open_00_015`16)
+ 78e:0 | 878e |             ; brace_close_00_015:
+ 78e:0 | 878e | 12          ; #d8 (OP_INC_PTR | 0x2
+ 78f:0 | 878f | 70          ; #d8 OP_JMP_FWD
+ 790:0 | 8790 | 97 87       ; #d16 le(brace_close_00_016`16)
+ 792:0 | 8792 |             ; brace_open_00_016:
+ 792:0 | 8792 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 793:0 | 8793 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 794:0 | 8794 | 80          ; #d8 OP_JMP_BCK
+ 795:0 | 8795 | 92 87       ; #d16 le(brace_open_00_016`16)
+ 797:0 | 8797 |             ; brace_close_00_016:
+ 797:0 | 8797 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 798:0 | 8798 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 799:0 | 8799 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 79a:0 | 879a | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 79b:0 | 879b | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 79c:0 | 879c | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 79d:0 | 879d | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 79e:0 | 879e | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 79f:0 | 879f | 28          ; #d8 (OP_DEC_PTR | 0x8
+ 7a0:0 | 87a0 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ 7a1:0 | 87a1 | 70          ; #d8 OP_JMP_FWD
+ 7a2:0 | 87a2 | bb 87       ; #d16 le(brace_close_00_017`16)
+ 7a4:0 | 87a4 |             ; brace_open_00_017:
+ 7a4:0 | 87a4 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7a5:0 | 87a5 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7a6:0 | 87a6 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7a7:0 | 87a7 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7a8:0 | 87a8 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7a9:0 | 87a9 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7aa:0 | 87aa | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7ab:0 | 87ab | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7ac:0 | 87ac | 18          ; #d8 (OP_INC_PTR | 0x8
+ 7ad:0 | 87ad | 32          ; #d8 (OP_INC_VAL | 0x2
+ 7ae:0 | 87ae | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7af:0 | 87af | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b0:0 | 87b0 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b1:0 | 87b1 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b2:0 | 87b2 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b3:0 | 87b3 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b4:0 | 87b4 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b5:0 | 87b5 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7b6:0 | 87b6 | 28          ; #d8 (OP_DEC_PTR | 0x8
+ 7b7:0 | 87b7 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 7b8:0 | 87b8 | 80          ; #d8 OP_JMP_BCK
+ 7b9:0 | 87b9 | a4 87       ; #d16 le(brace_open_00_017`16)
+ 7bb:0 | 87bb |             ; brace_close_00_017:
+ 7bb:0 | 87bb | 31          ; #d8 (OP_INC_VAL | 0x1
+ 7bc:0 | 87bc | 11          ; #d8 (OP_INC_PTR | 0x1
+ 7bd:0 | 87bd | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 7be:0 | 87be | 70          ; #d8 OP_JMP_FWD
+ 7bf:0 | 87bf | c7 87       ; #d16 le(brace_close_00_018`16)
+ 7c1:0 | 87c1 |             ; brace_open_00_018:
+ 7c1:0 | 87c1 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 7c2:0 | 87c2 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 7c3:0 | 87c3 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ 7c4:0 | 87c4 | 80          ; #d8 OP_JMP_BCK
+ 7c5:0 | 87c5 | c1 87       ; #d16 le(brace_open_00_018`16)
+ 7c7:0 | 87c7 |             ; brace_close_00_018:
+ 7c7:0 | 87c7 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 7c8:0 | 87c8 | 70          ; #d8 OP_JMP_FWD
+ 7c9:0 | 87c9 | d1 87       ; #d16 le(brace_close_00_019`16)
+ 7cb:0 | 87cb |             ; brace_open_00_019:
+ 7cb:0 | 87cb | 31          ; #d8 (OP_INC_VAL | 0x1
+ 7cc:0 | 87cc | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 7cd:0 | 87cd | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 7ce:0 | 87ce | 80          ; #d8 OP_JMP_BCK
+ 7cf:0 | 87cf | cb 87       ; #d16 le(brace_open_00_019`16)
+ 7d1:0 | 87d1 |             ; brace_close_00_019:
+ 7d1:0 | 87d1 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 7d2:0 | 87d2 | 70          ; #d8 OP_JMP_FWD
+ 7d3:0 | 87d3 | d9 87       ; #d16 le(brace_close_00_020`16)
+ 7d5:0 | 87d5 |             ; brace_open_00_020:
+ 7d5:0 | 87d5 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 7d6:0 | 87d6 | 80          ; #d8 OP_JMP_BCK
+ 7d7:0 | 87d7 | d5 87       ; #d16 le(brace_open_00_020`16)
+ 7d9:0 | 87d9 |             ; brace_close_00_020:
+ 7d9:0 | 87d9 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 7da:0 | 87da | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 7db:0 | 87db | 70          ; #d8 OP_JMP_FWD
+ 7dc:0 | 87dc | 17 88       ; #d16 le(brace_close_00_021`16)
+ 7de:0 | 87de |             ; brace_open_00_021:
+ 7de:0 | 87de | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 7df:0 | 87df | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e0:0 | 87e0 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e1:0 | 87e1 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e2:0 | 87e2 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e3:0 | 87e3 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e4:0 | 87e4 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e5:0 | 87e5 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e6:0 | 87e6 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e7:0 | 87e7 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e8:0 | 87e8 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7e9:0 | 87e9 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7ea:0 | 87ea | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7eb:0 | 87eb | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7ec:0 | 87ec | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7ed:0 | 87ed | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7ee:0 | 87ee | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7ef:0 | 87ef | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f0:0 | 87f0 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f1:0 | 87f1 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f2:0 | 87f2 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f3:0 | 87f3 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f4:0 | 87f4 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f5:0 | 87f5 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f6:0 | 87f6 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f7:0 | 87f7 | 2f          ; #d8 (OP_DEC_PTR | 0xF
+ 7f8:0 | 87f8 | 29          ; #d8 (OP_DEC_PTR | 0x9
+ 7f9:0 | 87f9 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 7fa:0 | 87fa | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7fb:0 | 87fb | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7fc:0 | 87fc | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7fd:0 | 87fd | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7fe:0 | 87fe | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 7ff:0 | 87ff | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 800:0 | 8800 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 801:0 | 8801 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 802:0 | 8802 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 803:0 | 8803 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 804:0 | 8804 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 805:0 | 8805 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 806:0 | 8806 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 807:0 | 8807 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 808:0 | 8808 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 809:0 | 8809 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 80a:0 | 880a | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 80b:0 | 880b | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 80c:0 | 880c | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 80d:0 | 880d | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 80e:0 | 880e | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 80f:0 | 880f | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 810:0 | 8810 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 811:0 | 8811 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 812:0 | 8812 | 1f          ; #d8 (OP_INC_PTR | 0xF
+ 813:0 | 8813 | 19          ; #d8 (OP_INC_PTR | 0x9
+ 814:0 | 8814 | 80          ; #d8 OP_JMP_BCK
+ 815:0 | 8815 | de 87       ; #d16 le(brace_open_00_021`16)
+ 817:0 | 8817 |             ; brace_close_00_021:
+ 817:0 | 8817 | 70          ; #d8 OP_JMP_FWD
+ 818:0 | 8818 | 1e 88       ; #d16 le(brace_close_00_022`16)
+ 81a:0 | 881a |             ; brace_open_00_022:
+ 81a:0 | 881a | 52          ; #d8 (OP_PUT_VAL | 0x2
+ 81b:0 | 881b | 80          ; #d8 OP_JMP_BCK
+ 81c:0 | 881c | 1a 88       ; #d16 le(brace_open_00_022`16)
+ 81e:0 | 881e |             ; brace_close_00_022:
+ 81e:0 | 881e | 70          ; #d8 OP_JMP_FWD
+ 81f:0 | 881f | 8e 88       ; #d16 le(brace_close_00_023`16)
+ 821:0 | 8821 |             ; brace_open_00_023:
+ 821:0 | 8821 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 822:0 | 8822 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 823:0 | 8823 | 70          ; #d8 OP_JMP_FWD
+ 824:0 | 8824 | 2d 88       ; #d16 le(brace_close_01_046`16)
+ 826:0 | 8826 |             ; brace_open_01_046:
+ 826:0 | 8826 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 827:0 | 8827 | 33          ; #d8 (OP_INC_VAL | 0x3
+ 828:0 | 8828 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 829:0 | 8829 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 82a:0 | 882a | 80          ; #d8 OP_JMP_BCK
+ 82b:0 | 882b | 26 88       ; #d16 le(brace_open_01_046`16)
+ 82d:0 | 882d |             ; brace_close_01_046:
+ 82d:0 | 882d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 82e:0 | 882e | 31          ; #d8 (OP_INC_VAL | 0x1
+ 82f:0 | 882f | 70          ; #d8 OP_JMP_FWD
+ 830:0 | 8830 | 39 88       ; #d16 le(brace_close_01_047`16)
+ 832:0 | 8832 |             ; brace_open_01_047:
+ 832:0 | 8832 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 833:0 | 8833 | 39          ; #d8 (OP_INC_VAL | 0x9
+ 834:0 | 8834 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 835:0 | 8835 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 836:0 | 8836 | 80          ; #d8 OP_JMP_BCK
+ 837:0 | 8837 | 32 88       ; #d16 le(brace_open_01_047`16)
+ 839:0 | 8839 |             ; brace_close_01_047:
+ 839:0 | 8839 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 83a:0 | 883a | 31          ; #d8 (OP_INC_VAL | 0x1
+ 83b:0 | 883b | 70          ; #d8 OP_JMP_FWD
+ 83c:0 | 883c | 82 88       ; #d16 le(brace_close_01_048`16)
+ 83e:0 | 883e |             ; brace_open_01_048:
+ 83e:0 | 883e | 70          ; #d8 OP_JMP_FWD
+ 83f:0 | 883f | 4a 88       ; #d16 le(brace_close_02_040`16)
+ 841:0 | 8841 |             ; brace_open_02_040:
+ 841:0 | 8841 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 842:0 | 8842 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 843:0 | 8843 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 844:0 | 8844 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 845:0 | 8845 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 846:0 | 8846 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 847:0 | 8847 | 80          ; #d8 OP_JMP_BCK
+ 848:0 | 8848 | 41 88       ; #d16 le(brace_open_02_040`16)
+ 84a:0 | 884a |             ; brace_close_02_040:
+ 84a:0 | 884a | 12          ; #d8 (OP_INC_PTR | 0x2
+ 84b:0 | 884b | 70          ; #d8 OP_JMP_FWD
+ 84c:0 | 884c | 55 88       ; #d16 le(brace_close_02_041`16)
+ 84e:0 | 884e |             ; brace_open_02_041:
+ 84e:0 | 884e | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 84f:0 | 884f | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 850:0 | 8850 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 851:0 | 8851 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 852:0 | 8852 | 80          ; #d8 OP_JMP_BCK
+ 853:0 | 8853 | 4e 88       ; #d16 le(brace_open_02_041`16)
+ 855:0 | 8855 |             ; brace_close_02_041:
+ 855:0 | 8855 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 856:0 | 8856 | 70          ; #d8 OP_JMP_FWD
+ 857:0 | 8857 | 7d 88       ; #d16 le(brace_close_02_042`16)
+ 859:0 | 8859 |             ; brace_open_02_042:
+ 859:0 | 8859 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 85a:0 | 885a | 70          ; #d8 OP_JMP_FWD
+ 85b:0 | 885b | 64 88       ; #d16 le(brace_close_03_017`16)
+ 85d:0 | 885d |             ; brace_open_03_017:
+ 85d:0 | 885d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 85e:0 | 885e | 12          ; #d8 (OP_INC_PTR | 0x2
+ 85f:0 | 885f | 31          ; #d8 (OP_INC_VAL | 0x1
+ 860:0 | 8860 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 861:0 | 8861 | 80          ; #d8 OP_JMP_BCK
+ 862:0 | 8862 | 5d 88       ; #d16 le(brace_open_03_017`16)
+ 864:0 | 8864 |             ; brace_close_03_017:
+ 864:0 | 8864 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 865:0 | 8865 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 866:0 | 8866 | 70          ; #d8 OP_JMP_FWD
+ 867:0 | 8867 | 70 88       ; #d16 le(brace_close_03_018`16)
+ 869:0 | 8869 |             ; brace_open_03_018:
+ 869:0 | 8869 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 86a:0 | 886a | 12          ; #d8 (OP_INC_PTR | 0x2
+ 86b:0 | 886b | 31          ; #d8 (OP_INC_VAL | 0x1
+ 86c:0 | 886c | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 86d:0 | 886d | 80          ; #d8 OP_JMP_BCK
+ 86e:0 | 886e | 69 88       ; #d16 le(brace_open_03_018`16)
+ 870:0 | 8870 |             ; brace_close_03_018:
+ 870:0 | 8870 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 871:0 | 8871 | 70          ; #d8 OP_JMP_FWD
+ 872:0 | 8872 | 78 88       ; #d16 le(brace_close_03_019`16)
+ 874:0 | 8874 |             ; brace_open_03_019:
+ 874:0 | 8874 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 875:0 | 8875 | 80          ; #d8 OP_JMP_BCK
+ 876:0 | 8876 | 74 88       ; #d16 le(brace_open_03_019`16)
+ 878:0 | 8878 |             ; brace_close_03_019:
+ 878:0 | 8878 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 879:0 | 8879 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 87a:0 | 887a | 80          ; #d8 OP_JMP_BCK
+ 87b:0 | 887b | 59 88       ; #d16 le(brace_open_02_042`16)
+ 87d:0 | 887d |             ; brace_close_02_042:
+ 87d:0 | 887d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 87e:0 | 887e | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 87f:0 | 887f | 80          ; #d8 OP_JMP_BCK
+ 880:0 | 8880 | 3e 88       ; #d16 le(brace_open_01_048`16)
+ 882:0 | 8882 |             ; brace_close_01_048:
+ 882:0 | 8882 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 883:0 | 8883 | 70          ; #d8 OP_JMP_FWD
+ 884:0 | 8884 | 8b 88       ; #d16 le(brace_close_01_049`16)
+ 886:0 | 8886 |             ; brace_open_01_049:
+ 886:0 | 8886 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 887:0 | 8887 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 888:0 | 8888 | 80          ; #d8 OP_JMP_BCK
+ 889:0 | 8889 | 86 88       ; #d16 le(brace_open_01_049`16)
+ 88b:0 | 888b |             ; brace_close_01_049:
+ 88b:0 | 888b | 80          ; #d8 OP_JMP_BCK
+ 88c:0 | 888c | 21 88       ; #d16 le(brace_open_00_023`16)
+ 88e:0 | 888e |             ; brace_close_00_023:
+ 88e:0 | 888e | 11          ; #d8 (OP_INC_PTR | 0x1
+ 88f:0 | 888f | 31          ; #d8 (OP_INC_VAL | 0x1
+ 890:0 | 8890 | 70          ; #d8 OP_JMP_FWD
+ 891:0 | 8891 | cd 88       ; #d16 le(brace_close_00_024`16)
+ 893:0 | 8893 |             ; brace_open_00_024:
+ 893:0 | 8893 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 894:0 | 8894 | 70          ; #d8 OP_JMP_FWD
+ 895:0 | 8895 | c8 88       ; #d16 le(brace_close_01_050`16)
+ 897:0 | 8897 |             ; brace_open_01_050:
+ 897:0 | 8897 | 70          ; #d8 OP_JMP_FWD
+ 898:0 | 8898 | 9e 88       ; #d16 le(brace_close_02_043`16)
+ 89a:0 | 889a |             ; brace_open_02_043:
+ 89a:0 | 889a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 89b:0 | 889b | 80          ; #d8 OP_JMP_BCK
+ 89c:0 | 889c | 9a 88       ; #d16 le(brace_open_02_043`16)
+ 89e:0 | 889e |             ; brace_close_02_043:
+ 89e:0 | 889e | 33          ; #d8 (OP_INC_VAL | 0x3
+ 89f:0 | 889f | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8a0:0 | 88a0 | 70          ; #d8 OP_JMP_FWD
+ 8a1:0 | 88a1 | a7 88       ; #d16 le(brace_close_02_044`16)
+ 8a3:0 | 88a3 |             ; brace_open_02_044:
+ 8a3:0 | 88a3 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8a4:0 | 88a4 | 80          ; #d8 OP_JMP_BCK
+ 8a5:0 | 88a5 | a3 88       ; #d16 le(brace_open_02_044`16)
+ 8a7:0 | 88a7 |             ; brace_close_02_044:
+ 8a7:0 | 88a7 | 36          ; #d8 (OP_INC_VAL | 0x6
+ 8a8:0 | 88a8 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8a9:0 | 88a9 | 70          ; #d8 OP_JMP_FWD
+ 8aa:0 | 88aa | b3 88       ; #d16 le(brace_close_02_045`16)
+ 8ac:0 | 88ac |             ; brace_open_02_045:
+ 8ac:0 | 88ac | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8ad:0 | 88ad | 36          ; #d8 (OP_INC_VAL | 0x6
+ 8ae:0 | 88ae | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8af:0 | 88af | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8b0:0 | 88b0 | 80          ; #d8 OP_JMP_BCK
+ 8b1:0 | 88b1 | ac 88       ; #d16 le(brace_open_02_045`16)
+ 8b3:0 | 88b3 |             ; brace_close_02_045:
+ 8b3:0 | 88b3 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8b4:0 | 88b4 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 8b5:0 | 88b5 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8b6:0 | 88b6 | 70          ; #d8 OP_JMP_FWD
+ 8b7:0 | 88b7 | bd 88       ; #d16 le(brace_close_02_046`16)
+ 8b9:0 | 88b9 |             ; brace_open_02_046:
+ 8b9:0 | 88b9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8ba:0 | 88ba | 80          ; #d8 OP_JMP_BCK
+ 8bb:0 | 88bb | b9 88       ; #d16 le(brace_open_02_046`16)
+ 8bd:0 | 88bd |             ; brace_close_02_046:
+ 8bd:0 | 88bd | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8be:0 | 88be | 70          ; #d8 OP_JMP_FWD
+ 8bf:0 | 88bf | c5 88       ; #d16 le(brace_close_02_047`16)
+ 8c1:0 | 88c1 |             ; brace_open_02_047:
+ 8c1:0 | 88c1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8c2:0 | 88c2 | 80          ; #d8 OP_JMP_BCK
+ 8c3:0 | 88c3 | c1 88       ; #d16 le(brace_open_02_047`16)
+ 8c5:0 | 88c5 |             ; brace_close_02_047:
+ 8c5:0 | 88c5 | 80          ; #d8 OP_JMP_BCK
+ 8c6:0 | 88c6 | 97 88       ; #d16 le(brace_open_01_050`16)
+ 8c8:0 | 88c8 |             ; brace_close_01_050:
+ 8c8:0 | 88c8 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 8c9:0 | 88c9 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8ca:0 | 88ca | 80          ; #d8 OP_JMP_BCK
+ 8cb:0 | 88cb | 93 88       ; #d16 le(brace_open_00_024`16)
+ 8cd:0 | 88cd |             ; brace_close_00_024:
+ 8cd:0 | 88cd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8ce:0 | 88ce | 38          ; #d8 (OP_INC_VAL | 0x8
+ 8cf:0 | 88cf | 70          ; #d8 OP_JMP_FWD
+ 8d0:0 | 88d0 | e6 88       ; #d16 le(brace_close_00_025`16)
+ 8d2:0 | 88d2 |             ; brace_open_00_025:
+ 8d2:0 | 88d2 | 70          ; #d8 OP_JMP_FWD
+ 8d3:0 | 88d3 | d9 88       ; #d16 le(brace_close_01_051`16)
+ 8d5:0 | 88d5 |             ; brace_open_01_051:
+ 8d5:0 | 88d5 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8d6:0 | 88d6 | 80          ; #d8 OP_JMP_BCK
+ 8d7:0 | 88d7 | d5 88       ; #d16 le(brace_open_01_051`16)
+ 8d9:0 | 88d9 |             ; brace_close_01_051:
+ 8d9:0 | 88d9 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 8da:0 | 88da | 70          ; #d8 OP_JMP_FWD
+ 8db:0 | 88db | e1 88       ; #d16 le(brace_close_01_052`16)
+ 8dd:0 | 88dd |             ; brace_open_01_052:
+ 8dd:0 | 88dd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8de:0 | 88de | 80          ; #d8 OP_JMP_BCK
+ 8df:0 | 88df | dd 88       ; #d16 le(brace_open_01_052`16)
+ 8e1:0 | 88e1 |             ; brace_close_01_052:
+ 8e1:0 | 88e1 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8e2:0 | 88e2 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8e3:0 | 88e3 | 80          ; #d8 OP_JMP_BCK
+ 8e4:0 | 88e4 | d2 88       ; #d16 le(brace_open_00_025`16)
+ 8e6:0 | 88e6 |             ; brace_close_00_025:
+ 8e6:0 | 88e6 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8e7:0 | 88e7 | 70          ; #d8 OP_JMP_FWD
+ 8e8:0 | 88e8 | ee 88       ; #d16 le(brace_close_00_026`16)
+ 8ea:0 | 88ea |             ; brace_open_00_026:
+ 8ea:0 | 88ea | 11          ; #d8 (OP_INC_PTR | 0x1
+ 8eb:0 | 88eb | 80          ; #d8 OP_JMP_BCK
+ 8ec:0 | 88ec | ea 88       ; #d16 le(brace_open_00_026`16)
+ 8ee:0 | 88ee |             ; brace_close_00_026:
+ 8ee:0 | 88ee | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8ef:0 | 88ef | 70          ; #d8 OP_JMP_FWD
+ 8f0:0 | 88f0 | fd 88       ; #d16 le(brace_close_00_027`16)
+ 8f2:0 | 88f2 |             ; brace_open_00_027:
+ 8f2:0 | 88f2 | 70          ; #d8 OP_JMP_FWD
+ 8f3:0 | 88f3 | f9 88       ; #d16 le(brace_close_01_053`16)
+ 8f5:0 | 88f5 |             ; brace_open_01_053:
+ 8f5:0 | 88f5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 8f6:0 | 88f6 | 80          ; #d8 OP_JMP_BCK
+ 8f7:0 | 88f7 | f5 88       ; #d16 le(brace_open_01_053`16)
+ 8f9:0 | 88f9 |             ; brace_close_01_053:
+ 8f9:0 | 88f9 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 8fa:0 | 88fa | 80          ; #d8 OP_JMP_BCK
+ 8fb:0 | 88fb | f2 88       ; #d16 le(brace_open_00_027`16)
+ 8fd:0 | 88fd |             ; brace_close_00_027:
+ 8fd:0 | 88fd | 31          ; #d8 (OP_INC_VAL | 0x1
+ 8fe:0 | 88fe | 70          ; #d8 OP_JMP_FWD
+ 8ff:0 | 88ff | 24 89       ; #d16 le(brace_close_00_028`16)
+ 901:0 | 8901 |             ; brace_open_00_028:
+ 901:0 | 8901 | 70          ; #d8 OP_JMP_FWD
+ 902:0 | 8902 | 08 89       ; #d16 le(brace_close_01_054`16)
+ 904:0 | 8904 |             ; brace_open_01_054:
+ 904:0 | 8904 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 905:0 | 8905 | 80          ; #d8 OP_JMP_BCK
+ 906:0 | 8906 | 04 89       ; #d16 le(brace_open_01_054`16)
+ 908:0 | 8908 |             ; brace_close_01_054:
+ 908:0 | 8908 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 909:0 | 8909 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 90a:0 | 890a | 70          ; #d8 OP_JMP_FWD
+ 90b:0 | 890b | 11 89       ; #d16 le(brace_close_01_055`16)
+ 90d:0 | 890d |             ; brace_open_01_055:
+ 90d:0 | 890d | 61          ; #d8 (OP_GET_VAL | 0x1
+ 90e:0 | 890e | 80          ; #d8 OP_JMP_BCK
+ 90f:0 | 890f | 0d 89       ; #d16 le(brace_open_01_055`16)
+ 911:0 | 8911 |             ; brace_close_01_055:
+ 911:0 | 8911 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 912:0 | 8912 | 70          ; #d8 OP_JMP_FWD
+ 913:0 | 8913 | 19 89       ; #d16 le(brace_close_01_056`16)
+ 915:0 | 8915 |             ; brace_open_01_056:
+ 915:0 | 8915 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 916:0 | 8916 | 80          ; #d8 OP_JMP_BCK
+ 917:0 | 8917 | 15 89       ; #d16 le(brace_open_01_056`16)
+ 919:0 | 8919 |             ; brace_close_01_056:
+ 919:0 | 8919 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 91a:0 | 891a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 91b:0 | 891b | 70          ; #d8 OP_JMP_FWD
+ 91c:0 | 891c | 21 89       ; #d16 le(brace_close_01_057`16)
+ 91e:0 | 891e |             ; brace_open_01_057:
+ 91e:0 | 891e | 80          ; #d8 OP_JMP_BCK
+ 91f:0 | 891f | 1e 89       ; #d16 le(brace_open_01_057`16)
+ 921:0 | 8921 |             ; brace_close_01_057:
+ 921:0 | 8921 | 80          ; #d8 OP_JMP_BCK
+ 922:0 | 8922 | 01 89       ; #d16 le(brace_open_00_028`16)
+ 924:0 | 8924 |             ; brace_close_00_028:
+ 924:0 | 8924 | 70          ; #d8 OP_JMP_FWD
+ 925:0 | 8925 | 2b 89       ; #d16 le(brace_close_00_029`16)
+ 927:0 | 8927 |             ; brace_open_00_029:
+ 927:0 | 8927 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 928:0 | 8928 | 80          ; #d8 OP_JMP_BCK
+ 929:0 | 8929 | 27 89       ; #d16 le(brace_open_00_029`16)
+ 92b:0 | 892b |             ; brace_close_00_029:
+ 92b:0 | 892b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 92c:0 | 892c | 70          ; #d8 OP_JMP_FWD
+ 92d:0 | 892d | 33 89       ; #d16 le(brace_close_00_030`16)
+ 92f:0 | 892f |             ; brace_open_00_030:
+ 92f:0 | 892f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 930:0 | 8930 | 80          ; #d8 OP_JMP_BCK
+ 931:0 | 8931 | 2f 89       ; #d16 le(brace_open_00_030`16)
+ 933:0 | 8933 |             ; brace_close_00_030:
+ 933:0 | 8933 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 934:0 | 8934 | 70          ; #d8 OP_JMP_FWD
+ 935:0 | 8935 | 3b 89       ; #d16 le(brace_close_00_031`16)
+ 937:0 | 8937 |             ; brace_open_00_031:
+ 937:0 | 8937 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 938:0 | 8938 | 80          ; #d8 OP_JMP_BCK
+ 939:0 | 8939 | 37 89       ; #d16 le(brace_open_00_031`16)
+ 93b:0 | 893b |             ; brace_close_00_031:
+ 93b:0 | 893b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 93c:0 | 893c | 70          ; #d8 OP_JMP_FWD
+ 93d:0 | 893d | 43 89       ; #d16 le(brace_close_00_032`16)
+ 93f:0 | 893f |             ; brace_open_00_032:
+ 93f:0 | 893f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 940:0 | 8940 | 80          ; #d8 OP_JMP_BCK
+ 941:0 | 8941 | 3f 89       ; #d16 le(brace_open_00_032`16)
+ 943:0 | 8943 |             ; brace_close_00_032:
+ 943:0 | 8943 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 944:0 | 8944 | 70          ; #d8 OP_JMP_FWD
+ 945:0 | 8945 | 4b 89       ; #d16 le(brace_close_00_033`16)
+ 947:0 | 8947 |             ; brace_open_00_033:
+ 947:0 | 8947 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 948:0 | 8948 | 80          ; #d8 OP_JMP_BCK
+ 949:0 | 8949 | 47 89       ; #d16 le(brace_open_00_033`16)
+ 94b:0 | 894b |             ; brace_close_00_033:
+ 94b:0 | 894b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 94c:0 | 894c | 70          ; #d8 OP_JMP_FWD
+ 94d:0 | 894d | 53 89       ; #d16 le(brace_close_00_034`16)
+ 94f:0 | 894f |             ; brace_open_00_034:
+ 94f:0 | 894f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 950:0 | 8950 | 80          ; #d8 OP_JMP_BCK
+ 951:0 | 8951 | 4f 89       ; #d16 le(brace_open_00_034`16)
+ 953:0 | 8953 |             ; brace_close_00_034:
+ 953:0 | 8953 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 954:0 | 8954 | 70          ; #d8 OP_JMP_FWD
+ 955:0 | 8955 | 5b 89       ; #d16 le(brace_close_00_035`16)
+ 957:0 | 8957 |             ; brace_open_00_035:
+ 957:0 | 8957 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 958:0 | 8958 | 80          ; #d8 OP_JMP_BCK
+ 959:0 | 8959 | 57 89       ; #d16 le(brace_open_00_035`16)
+ 95b:0 | 895b |             ; brace_close_00_035:
+ 95b:0 | 895b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 95c:0 | 895c | 70          ; #d8 OP_JMP_FWD
+ 95d:0 | 895d | 63 89       ; #d16 le(brace_close_00_036`16)
+ 95f:0 | 895f |             ; brace_open_00_036:
+ 95f:0 | 895f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 960:0 | 8960 | 80          ; #d8 OP_JMP_BCK
+ 961:0 | 8961 | 5f 89       ; #d16 le(brace_open_00_036`16)
+ 963:0 | 8963 |             ; brace_close_00_036:
+ 963:0 | 8963 | 27          ; #d8 (OP_DEC_PTR | 0x7
+ 964:0 | 8964 | 34          ; #d8 (OP_INC_VAL | 0x4
+ 965:0 | 8965 | 70          ; #d8 OP_JMP_FWD
+ 966:0 | 8966 | 73 89       ; #d16 le(brace_close_00_037`16)
+ 968:0 | 8968 |             ; brace_open_00_037:
+ 968:0 | 8968 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 969:0 | 8969 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 96a:0 | 896a | 34          ; #d8 (OP_INC_VAL | 0x4
+ 96b:0 | 896b | 12          ; #d8 (OP_INC_PTR | 0x2
+ 96c:0 | 896c | 34          ; #d8 (OP_INC_VAL | 0x4
+ 96d:0 | 896d | 12          ; #d8 (OP_INC_PTR | 0x2
+ 96e:0 | 896e | 34          ; #d8 (OP_INC_VAL | 0x4
+ 96f:0 | 896f | 26          ; #d8 (OP_DEC_PTR | 0x6
+ 970:0 | 8970 | 80          ; #d8 OP_JMP_BCK
+ 971:0 | 8971 | 68 89       ; #d16 le(brace_open_00_037`16)
+ 973:0 | 8973 |             ; brace_close_00_037:
+ 973:0 | 8973 | 3e          ; #d8 (OP_INC_VAL | 0xE
+ 974:0 | 8974 | 14          ; #d8 (OP_INC_PTR | 0x4
+ 975:0 | 8975 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 976:0 | 8976 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 977:0 | 8977 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 978:0 | 8978 | 26          ; #d8 (OP_DEC_PTR | 0x6
+ 979:0 | 8979 | 70          ; #d8 OP_JMP_FWD
+ 97a:0 | 897a | 1d 8a       ; #d16 le(brace_close_00_038`16)
+ 97c:0 | 897c |             ; brace_open_00_038:
+ 97c:0 | 897c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 97d:0 | 897d | 12          ; #d8 (OP_INC_PTR | 0x2
+ 97e:0 | 897e | 70          ; #d8 OP_JMP_FWD
+ 97f:0 | 897f | 0e 8a       ; #d16 le(brace_close_01_058`16)
+ 981:0 | 8981 |             ; brace_open_01_058:
+ 981:0 | 8981 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 982:0 | 8982 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 983:0 | 8983 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 984:0 | 8984 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 985:0 | 8985 | 70          ; #d8 OP_JMP_FWD
+ 986:0 | 8986 | ff 89       ; #d16 le(brace_close_02_048`16)
+ 988:0 | 8988 |             ; brace_open_02_048:
+ 988:0 | 8988 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 989:0 | 8989 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 98a:0 | 898a | 31          ; #d8 (OP_INC_VAL | 0x1
+ 98b:0 | 898b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 98c:0 | 898c | 70          ; #d8 OP_JMP_FWD
+ 98d:0 | 898d | f0 89       ; #d16 le(brace_close_03_020`16)
+ 98f:0 | 898f |             ; brace_open_03_020:
+ 98f:0 | 898f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 990:0 | 8990 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 991:0 | 8991 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 992:0 | 8992 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 993:0 | 8993 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 994:0 | 8994 | 70          ; #d8 OP_JMP_FWD
+ 995:0 | 8995 | 9d 89       ; #d16 le(brace_close_04_001`16)
+ 997:0 | 8997 |             ; brace_open_04_001:
+ 997:0 | 8997 | 13          ; #d8 (OP_INC_PTR | 0x3
+ 998:0 | 8998 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 999:0 | 8999 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 99a:0 | 899a | 80          ; #d8 OP_JMP_BCK
+ 99b:0 | 899b | 97 89       ; #d16 le(brace_open_04_001`16)
+ 99d:0 | 899d |             ; brace_close_04_001:
+ 99d:0 | 899d | 12          ; #d8 (OP_INC_PTR | 0x2
+ 99e:0 | 899e | 70          ; #d8 OP_JMP_FWD
+ 99f:0 | 899f | a8 89       ; #d16 le(brace_close_04_002`16)
+ 9a1:0 | 89a1 |             ; brace_open_04_002:
+ 9a1:0 | 89a1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9a2:0 | 89a2 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 9a3:0 | 89a3 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 9a4:0 | 89a4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 9a5:0 | 89a5 | 80          ; #d8 OP_JMP_BCK
+ 9a6:0 | 89a6 | a1 89       ; #d16 le(brace_open_04_002`16)
+ 9a8:0 | 89a8 |             ; brace_close_04_002:
+ 9a8:0 | 89a8 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 9a9:0 | 89a9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9aa:0 | 89aa | 70          ; #d8 OP_JMP_FWD
+ 9ab:0 | 89ab | ec 89       ; #d16 le(brace_close_04_003`16)
+ 9ad:0 | 89ad |             ; brace_open_04_003:
+ 9ad:0 | 89ad | 23          ; #d8 (OP_DEC_PTR | 0x3
+ 9ae:0 | 89ae | 70          ; #d8 OP_JMP_FWD
+ 9af:0 | 89af | b5 89       ; #d16 le(brace_close_05_001`16)
+ 9b1:0 | 89b1 |             ; brace_open_05_001:
+ 9b1:0 | 89b1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9b2:0 | 89b2 | 80          ; #d8 OP_JMP_BCK
+ 9b3:0 | 89b3 | b1 89       ; #d16 le(brace_open_05_001`16)
+ 9b5:0 | 89b5 |             ; brace_close_05_001:
+ 9b5:0 | 89b5 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 9b6:0 | 89b6 | 70          ; #d8 OP_JMP_FWD
+ 9b7:0 | 89b7 | bd 89       ; #d16 le(brace_close_05_002`16)
+ 9b9:0 | 89b9 |             ; brace_open_05_002:
+ 9b9:0 | 89b9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9ba:0 | 89ba | 80          ; #d8 OP_JMP_BCK
+ 9bb:0 | 89bb | b9 89       ; #d16 le(brace_open_05_002`16)
+ 9bd:0 | 89bd |             ; brace_close_05_002:
+ 9bd:0 | 89bd | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 9be:0 | 89be | 70          ; #d8 OP_JMP_FWD
+ 9bf:0 | 89bf | c5 89       ; #d16 le(brace_close_05_003`16)
+ 9c1:0 | 89c1 |             ; brace_open_05_003:
+ 9c1:0 | 89c1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9c2:0 | 89c2 | 80          ; #d8 OP_JMP_BCK
+ 9c3:0 | 89c3 | c1 89       ; #d16 le(brace_open_05_003`16)
+ 9c5:0 | 89c5 |             ; brace_close_05_003:
+ 9c5:0 | 89c5 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 9c6:0 | 89c6 | 70          ; #d8 OP_JMP_FWD
+ 9c7:0 | 89c7 | cd 89       ; #d16 le(brace_close_05_004`16)
+ 9c9:0 | 89c9 |             ; brace_open_05_004:
+ 9c9:0 | 89c9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9ca:0 | 89ca | 80          ; #d8 OP_JMP_BCK
+ 9cb:0 | 89cb | c9 89       ; #d16 le(brace_open_05_004`16)
+ 9cd:0 | 89cd |             ; brace_close_05_004:
+ 9cd:0 | 89cd | 13          ; #d8 (OP_INC_PTR | 0x3
+ 9ce:0 | 89ce | 70          ; #d8 OP_JMP_FWD
+ 9cf:0 | 89cf | d5 89       ; #d16 le(brace_close_05_005`16)
+ 9d1:0 | 89d1 |             ; brace_open_05_005:
+ 9d1:0 | 89d1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9d2:0 | 89d2 | 80          ; #d8 OP_JMP_BCK
+ 9d3:0 | 89d3 | d1 89       ; #d16 le(brace_open_05_005`16)
+ 9d5:0 | 89d5 |             ; brace_close_05_005:
+ 9d5:0 | 89d5 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 9d6:0 | 89d6 | 70          ; #d8 OP_JMP_FWD
+ 9d7:0 | 89d7 | dd 89       ; #d16 le(brace_close_05_006`16)
+ 9d9:0 | 89d9 |             ; brace_open_05_006:
+ 9d9:0 | 89d9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9da:0 | 89da | 80          ; #d8 OP_JMP_BCK
+ 9db:0 | 89db | d9 89       ; #d16 le(brace_open_05_006`16)
+ 9dd:0 | 89dd |             ; brace_close_05_006:
+ 9dd:0 | 89dd | 12          ; #d8 (OP_INC_PTR | 0x2
+ 9de:0 | 89de | 70          ; #d8 OP_JMP_FWD
+ 9df:0 | 89df | e5 89       ; #d16 le(brace_close_05_007`16)
+ 9e1:0 | 89e1 |             ; brace_open_05_007:
+ 9e1:0 | 89e1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9e2:0 | 89e2 | 80          ; #d8 OP_JMP_BCK
+ 9e3:0 | 89e3 | e1 89       ; #d16 le(brace_open_05_007`16)
+ 9e5:0 | 89e5 |             ; brace_close_05_007:
+ 9e5:0 | 89e5 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 9e6:0 | 89e6 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9e7:0 | 89e7 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 9e8:0 | 89e8 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 9e9:0 | 89e9 | 80          ; #d8 OP_JMP_BCK
+ 9ea:0 | 89ea | ad 89       ; #d16 le(brace_open_04_003`16)
+ 9ec:0 | 89ec |             ; brace_close_04_003:
+ 9ec:0 | 89ec | 23          ; #d8 (OP_DEC_PTR | 0x3
+ 9ed:0 | 89ed | 80          ; #d8 OP_JMP_BCK
+ 9ee:0 | 89ee | 8f 89       ; #d16 le(brace_open_03_020`16)
+ 9f0:0 | 89f0 |             ; brace_close_03_020:
+ 9f0:0 | 89f0 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 9f1:0 | 89f1 | 70          ; #d8 OP_JMP_FWD
+ 9f2:0 | 89f2 | fb 89       ; #d16 le(brace_close_03_021`16)
+ 9f4:0 | 89f4 |             ; brace_open_03_021:
+ 9f4:0 | 89f4 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 9f5:0 | 89f5 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 9f6:0 | 89f6 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 9f7:0 | 89f7 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 9f8:0 | 89f8 | 80          ; #d8 OP_JMP_BCK
+ 9f9:0 | 89f9 | f4 89       ; #d16 le(brace_open_03_021`16)
+ 9fb:0 | 89fb |             ; brace_close_03_021:
+ 9fb:0 | 89fb | 23          ; #d8 (OP_DEC_PTR | 0x3
+ 9fc:0 | 89fc | 80          ; #d8 OP_JMP_BCK
+ 9fd:0 | 89fd | 88 89       ; #d16 le(brace_open_02_048`16)
+ 9ff:0 | 89ff |             ; brace_close_02_048:
+ 9ff:0 | 89ff | 11          ; #d8 (OP_INC_PTR | 0x1
+ a00:0 | 8a00 | 70          ; #d8 OP_JMP_FWD
+ a01:0 | 8a01 | 0a 8a       ; #d16 le(brace_close_02_049`16)
+ a03:0 | 8a03 |             ; brace_open_02_049:
+ a03:0 | 8a03 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a04:0 | 8a04 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a05:0 | 8a05 | 31          ; #d8 (OP_INC_VAL | 0x1
+ a06:0 | 8a06 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a07:0 | 8a07 | 80          ; #d8 OP_JMP_BCK
+ a08:0 | 8a08 | 03 8a       ; #d16 le(brace_open_02_049`16)
+ a0a:0 | 8a0a |             ; brace_close_02_049:
+ a0a:0 | 8a0a | 23          ; #d8 (OP_DEC_PTR | 0x3
+ a0b:0 | 8a0b | 80          ; #d8 OP_JMP_BCK
+ a0c:0 | 8a0c | 81 89       ; #d16 le(brace_open_01_058`16)
+ a0e:0 | 8a0e |             ; brace_close_01_058:
+ a0e:0 | 8a0e | 11          ; #d8 (OP_INC_PTR | 0x1
+ a0f:0 | 8a0f | 70          ; #d8 OP_JMP_FWD
+ a10:0 | 8a10 | 19 8a       ; #d16 le(brace_close_01_059`16)
+ a12:0 | 8a12 |             ; brace_open_01_059:
+ a12:0 | 8a12 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a13:0 | 8a13 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a14:0 | 8a14 | 31          ; #d8 (OP_INC_VAL | 0x1
+ a15:0 | 8a15 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a16:0 | 8a16 | 80          ; #d8 OP_JMP_BCK
+ a17:0 | 8a17 | 12 8a       ; #d16 le(brace_open_01_059`16)
+ a19:0 | 8a19 |             ; brace_close_01_059:
+ a19:0 | 8a19 | 23          ; #d8 (OP_DEC_PTR | 0x3
+ a1a:0 | 8a1a | 80          ; #d8 OP_JMP_BCK
+ a1b:0 | 8a1b | 7c 89       ; #d16 le(brace_open_00_038`16)
+ a1d:0 | 8a1d |             ; brace_close_00_038:
+ a1d:0 | 8a1d | 11          ; #d8 (OP_INC_PTR | 0x1
+ a1e:0 | 8a1e | 31          ; #d8 (OP_INC_VAL | 0x1
+ a1f:0 | 8a1f | 11          ; #d8 (OP_INC_PTR | 0x1
+ a20:0 | 8a20 | 70          ; #d8 OP_JMP_FWD
+ a21:0 | 8a21 | 30 8a       ; #d16 le(brace_close_00_039`16)
+ a23:0 | 8a23 |             ; brace_open_00_039:
+ a23:0 | 8a23 | 70          ; #d8 OP_JMP_FWD
+ a24:0 | 8a24 | 2a 8a       ; #d16 le(brace_close_01_060`16)
+ a26:0 | 8a26 |             ; brace_open_01_060:
+ a26:0 | 8a26 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a27:0 | 8a27 | 80          ; #d8 OP_JMP_BCK
+ a28:0 | 8a28 | 26 8a       ; #d16 le(brace_open_01_060`16)
+ a2a:0 | 8a2a |             ; brace_close_01_060:
+ a2a:0 | 8a2a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a2b:0 | 8a2b | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a2c:0 | 8a2c | 11          ; #d8 (OP_INC_PTR | 0x1
+ a2d:0 | 8a2d | 80          ; #d8 OP_JMP_BCK
+ a2e:0 | 8a2e | 23 8a       ; #d16 le(brace_open_00_039`16)
+ a30:0 | 8a30 |             ; brace_close_00_039:
+ a30:0 | 8a30 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a31:0 | 8a31 | 70          ; #d8 OP_JMP_FWD
+ a32:0 | 8a32 | 44 8a       ; #d16 le(brace_close_00_040`16)
+ a34:0 | 8a34 |             ; brace_open_00_040:
+ a34:0 | 8a34 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a35:0 | 8a35 | 17          ; #d8 (OP_INC_PTR | 0x7
+ a36:0 | 8a36 | 70          ; #d8 OP_JMP_FWD
+ a37:0 | 8a37 | 40 8a       ; #d16 le(brace_close_01_061`16)
+ a39:0 | 8a39 |             ; brace_open_01_061:
+ a39:0 | 8a39 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a3a:0 | 8a3a | 28          ; #d8 (OP_DEC_PTR | 0x8
+ a3b:0 | 8a3b | 31          ; #d8 (OP_INC_VAL | 0x1
+ a3c:0 | 8a3c | 18          ; #d8 (OP_INC_PTR | 0x8
+ a3d:0 | 8a3d | 80          ; #d8 OP_JMP_BCK
+ a3e:0 | 8a3e | 39 8a       ; #d16 le(brace_open_01_061`16)
+ a40:0 | 8a40 |             ; brace_close_01_061:
+ a40:0 | 8a40 | 27          ; #d8 (OP_DEC_PTR | 0x7
+ a41:0 | 8a41 | 80          ; #d8 OP_JMP_BCK
+ a42:0 | 8a42 | 34 8a       ; #d16 le(brace_open_00_040`16)
+ a44:0 | 8a44 |             ; brace_close_00_040:
+ a44:0 | 8a44 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a45:0 | 8a45 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a46:0 | 8a46 | 31          ; #d8 (OP_INC_VAL | 0x1
+ a47:0 | 8a47 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a48:0 | 8a48 | 70          ; #d8 OP_JMP_FWD
+ a49:0 | 8a49 | 1a 8b       ; #d16 le(brace_close_00_041`16)
+ a4b:0 | 8a4b |             ; brace_open_00_041:
+ a4b:0 | 8a4b | 11          ; #d8 (OP_INC_PTR | 0x1
+ a4c:0 | 8a4c | 70          ; #d8 OP_JMP_FWD
+ a4d:0 | 8a4d | 53 8a       ; #d16 le(brace_close_01_062`16)
+ a4f:0 | 8a4f |             ; brace_open_01_062:
+ a4f:0 | 8a4f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a50:0 | 8a50 | 80          ; #d8 OP_JMP_BCK
+ a51:0 | 8a51 | 4f 8a       ; #d16 le(brace_open_01_062`16)
+ a53:0 | 8a53 |             ; brace_close_01_062:
+ a53:0 | 8a53 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a54:0 | 8a54 | 70          ; #d8 OP_JMP_FWD
+ a55:0 | 8a55 | 5b 8a       ; #d16 le(brace_close_01_063`16)
+ a57:0 | 8a57 |             ; brace_open_01_063:
+ a57:0 | 8a57 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a58:0 | 8a58 | 80          ; #d8 OP_JMP_BCK
+ a59:0 | 8a59 | 57 8a       ; #d16 le(brace_open_01_063`16)
+ a5b:0 | 8a5b |             ; brace_close_01_063:
+ a5b:0 | 8a5b | 35          ; #d8 (OP_INC_VAL | 0x5
+ a5c:0 | 8a5c | 70          ; #d8 OP_JMP_FWD
+ a5d:0 | 8a5d | 66 8a       ; #d16 le(brace_close_01_064`16)
+ a5f:0 | 8a5f |             ; brace_open_01_064:
+ a5f:0 | 8a5f | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a60:0 | 8a60 | 36          ; #d8 (OP_INC_VAL | 0x6
+ a61:0 | 8a61 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a62:0 | 8a62 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a63:0 | 8a63 | 80          ; #d8 OP_JMP_BCK
+ a64:0 | 8a64 | 5f 8a       ; #d16 le(brace_open_01_064`16)
+ a66:0 | 8a66 |             ; brace_close_01_064:
+ a66:0 | 8a66 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a67:0 | 8a67 | 32          ; #d8 (OP_INC_VAL | 0x2
+ a68:0 | 8a68 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ a69:0 | 8a69 | 70          ; #d8 OP_JMP_FWD
+ a6a:0 | 8a6a | 70 8a       ; #d16 le(brace_close_01_065`16)
+ a6c:0 | 8a6c |             ; brace_open_01_065:
+ a6c:0 | 8a6c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a6d:0 | 8a6d | 80          ; #d8 OP_JMP_BCK
+ a6e:0 | 8a6e | 6c 8a       ; #d16 le(brace_open_01_065`16)
+ a70:0 | 8a70 |             ; brace_close_01_065:
+ a70:0 | 8a70 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a71:0 | 8a71 | 70          ; #d8 OP_JMP_FWD
+ a72:0 | 8a72 | 17 8b       ; #d16 le(brace_close_01_066`16)
+ a74:0 | 8a74 |             ; brace_open_01_066:
+ a74:0 | 8a74 | 70          ; #d8 OP_JMP_FWD
+ a75:0 | 8a75 | 7e 8a       ; #d16 le(brace_close_02_050`16)
+ a77:0 | 8a77 |             ; brace_open_02_050:
+ a77:0 | 8a77 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a78:0 | 8a78 | 12          ; #d8 (OP_INC_PTR | 0x2
+ a79:0 | 8a79 | 31          ; #d8 (OP_INC_VAL | 0x1
+ a7a:0 | 8a7a | 22          ; #d8 (OP_DEC_PTR | 0x2
+ a7b:0 | 8a7b | 80          ; #d8 OP_JMP_BCK
+ a7c:0 | 8a7c | 77 8a       ; #d16 le(brace_open_02_050`16)
+ a7e:0 | 8a7e |             ; brace_close_02_050:
+ a7e:0 | 8a7e | 12          ; #d8 (OP_INC_PTR | 0x2
+ a7f:0 | 8a7f | 70          ; #d8 OP_JMP_FWD
+ a80:0 | 8a80 | f6 8a       ; #d16 le(brace_close_02_051`16)
+ a82:0 | 8a82 |             ; brace_open_02_051:
+ a82:0 | 8a82 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a83:0 | 8a83 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a84:0 | 8a84 | 32          ; #d8 (OP_INC_VAL | 0x2
+ a85:0 | 8a85 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a86:0 | 8a86 | 70          ; #d8 OP_JMP_FWD
+ a87:0 | 8a87 | f2 8a       ; #d16 le(brace_close_03_022`16)
+ a89:0 | 8a89 |             ; brace_open_03_022:
+ a89:0 | 8a89 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a8a:0 | 8a8a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a8b:0 | 8a8b | 31          ; #d8 (OP_INC_VAL | 0x1
+ a8c:0 | 8a8c | 11          ; #d8 (OP_INC_PTR | 0x1
+ a8d:0 | 8a8d | 70          ; #d8 OP_JMP_FWD
+ a8e:0 | 8a8e | ef 8a       ; #d16 le(brace_close_04_004`16)
+ a90:0 | 8a90 |             ; brace_open_04_004:
+ a90:0 | 8a90 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a91:0 | 8a91 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a92:0 | 8a92 | 31          ; #d8 (OP_INC_VAL | 0x1
+ a93:0 | 8a93 | 11          ; #d8 (OP_INC_PTR | 0x1
+ a94:0 | 8a94 | 70          ; #d8 OP_JMP_FWD
+ a95:0 | 8a95 | ec 8a       ; #d16 le(brace_close_05_008`16)
+ a97:0 | 8a97 |             ; brace_open_05_008:
+ a97:0 | 8a97 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a98:0 | 8a98 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ a99:0 | 8a99 | 31          ; #d8 (OP_INC_VAL | 0x1
+ a9a:0 | 8a9a | 11          ; #d8 (OP_INC_PTR | 0x1
+ a9b:0 | 8a9b | 70          ; #d8 OP_JMP_FWD
+ a9c:0 | 8a9c | e9 8a       ; #d16 le(brace_close_06_001`16)
+ a9e:0 | 8a9e |             ; brace_open_06_001:
+ a9e:0 | 8a9e | 41          ; #d8 (OP_DEC_VAL | 0x1
+ a9f:0 | 8a9f | 21          ; #d8 (OP_DEC_PTR | 0x1
+ aa0:0 | 8aa0 | 31          ; #d8 (OP_INC_VAL | 0x1
+ aa1:0 | 8aa1 | 11          ; #d8 (OP_INC_PTR | 0x1
+ aa2:0 | 8aa2 | 70          ; #d8 OP_JMP_FWD
+ aa3:0 | 8aa3 | e6 8a       ; #d16 le(brace_close_07_001`16)
+ aa5:0 | 8aa5 |             ; brace_open_07_001:
+ aa5:0 | 8aa5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ aa6:0 | 8aa6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ aa7:0 | 8aa7 | 31          ; #d8 (OP_INC_VAL | 0x1
+ aa8:0 | 8aa8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ aa9:0 | 8aa9 | 70          ; #d8 OP_JMP_FWD
+ aaa:0 | 8aaa | e3 8a       ; #d16 le(brace_close_08_000`16)
+ aac:0 | 8aac |             ; brace_open_08_000:
+ aac:0 | 8aac | 41          ; #d8 (OP_DEC_VAL | 0x1
+ aad:0 | 8aad | 21          ; #d8 (OP_DEC_PTR | 0x1
+ aae:0 | 8aae | 31          ; #d8 (OP_INC_VAL | 0x1
+ aaf:0 | 8aaf | 11          ; #d8 (OP_INC_PTR | 0x1
+ ab0:0 | 8ab0 | 70          ; #d8 OP_JMP_FWD
+ ab1:0 | 8ab1 | e0 8a       ; #d16 le(brace_close_09_000`16)
+ ab3:0 | 8ab3 |             ; brace_open_09_000:
+ ab3:0 | 8ab3 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ ab4:0 | 8ab4 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ ab5:0 | 8ab5 | 31          ; #d8 (OP_INC_VAL | 0x1
+ ab6:0 | 8ab6 | 11          ; #d8 (OP_INC_PTR | 0x1
+ ab7:0 | 8ab7 | 70          ; #d8 OP_JMP_FWD
+ ab8:0 | 8ab8 | dd 8a       ; #d16 le(brace_close_10_000`16)
+ aba:0 | 8aba |             ; brace_open_10_000:
+ aba:0 | 8aba | 41          ; #d8 (OP_DEC_VAL | 0x1
+ abb:0 | 8abb | 21          ; #d8 (OP_DEC_PTR | 0x1
+ abc:0 | 8abc | 31          ; #d8 (OP_INC_VAL | 0x1
+ abd:0 | 8abd | 11          ; #d8 (OP_INC_PTR | 0x1
+ abe:0 | 8abe | 70          ; #d8 OP_JMP_FWD
+ abf:0 | 8abf | da 8a       ; #d16 le(brace_close_11_000`16)
+ ac1:0 | 8ac1 |             ; brace_open_11_000:
+ ac1:0 | 8ac1 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ ac2:0 | 8ac2 | 70          ; #d8 OP_JMP_FWD
+ ac3:0 | 8ac3 | c9 8a       ; #d16 le(brace_close_12_000`16)
+ ac5:0 | 8ac5 |             ; brace_open_12_000:
+ ac5:0 | 8ac5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ ac6:0 | 8ac6 | 80          ; #d8 OP_JMP_BCK
+ ac7:0 | 8ac7 | c5 8a       ; #d16 le(brace_open_12_000`16)
+ ac9:0 | 8ac9 |             ; brace_close_12_000:
+ ac9:0 | 8ac9 | 31          ; #d8 (OP_INC_VAL | 0x1
+ aca:0 | 8aca | 11          ; #d8 (OP_INC_PTR | 0x1
+ acb:0 | 8acb | 41          ; #d8 (OP_DEC_VAL | 0x1
+ acc:0 | 8acc | 11          ; #d8 (OP_INC_PTR | 0x1
+ acd:0 | 8acd | 31          ; #d8 (OP_INC_VAL | 0x1
+ ace:0 | 8ace | 21          ; #d8 (OP_DEC_PTR | 0x1
+ acf:0 | 8acf | 70          ; #d8 OP_JMP_FWD
+ ad0:0 | 8ad0 | d7 8a       ; #d16 le(brace_close_12_001`16)
+ ad2:0 | 8ad2 |             ; brace_open_12_001:
+ ad2:0 | 8ad2 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ ad3:0 | 8ad3 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ ad4:0 | 8ad4 | 80          ; #d8 OP_JMP_BCK
+ ad5:0 | 8ad5 | d2 8a       ; #d16 le(brace_open_12_001`16)
+ ad7:0 | 8ad7 |             ; brace_close_12_001:
+ ad7:0 | 8ad7 | 80          ; #d8 OP_JMP_BCK
+ ad8:0 | 8ad8 | c1 8a       ; #d16 le(brace_open_11_000`16)
+ ada:0 | 8ada |             ; brace_close_11_000:
+ ada:0 | 8ada | 80          ; #d8 OP_JMP_BCK
+ adb:0 | 8adb | ba 8a       ; #d16 le(brace_open_10_000`16)
+ add:0 | 8add |             ; brace_close_10_000:
+ add:0 | 8add | 80          ; #d8 OP_JMP_BCK
+ ade:0 | 8ade | b3 8a       ; #d16 le(brace_open_09_000`16)
+ ae0:0 | 8ae0 |             ; brace_close_09_000:
+ ae0:0 | 8ae0 | 80          ; #d8 OP_JMP_BCK
+ ae1:0 | 8ae1 | ac 8a       ; #d16 le(brace_open_08_000`16)
+ ae3:0 | 8ae3 |             ; brace_close_08_000:
+ ae3:0 | 8ae3 | 80          ; #d8 OP_JMP_BCK
+ ae4:0 | 8ae4 | a5 8a       ; #d16 le(brace_open_07_001`16)
+ ae6:0 | 8ae6 |             ; brace_close_07_001:
+ ae6:0 | 8ae6 | 80          ; #d8 OP_JMP_BCK
+ ae7:0 | 8ae7 | 9e 8a       ; #d16 le(brace_open_06_001`16)
+ ae9:0 | 8ae9 |             ; brace_close_06_001:
+ ae9:0 | 8ae9 | 80          ; #d8 OP_JMP_BCK
+ aea:0 | 8aea | 97 8a       ; #d16 le(brace_open_05_008`16)
+ aec:0 | 8aec |             ; brace_close_05_008:
+ aec:0 | 8aec | 80          ; #d8 OP_JMP_BCK
+ aed:0 | 8aed | 90 8a       ; #d16 le(brace_open_04_004`16)
+ aef:0 | 8aef |             ; brace_close_04_004:
+ aef:0 | 8aef | 80          ; #d8 OP_JMP_BCK
+ af0:0 | 8af0 | 89 8a       ; #d16 le(brace_open_03_022`16)
+ af2:0 | 8af2 |             ; brace_close_03_022:
+ af2:0 | 8af2 | 11          ; #d8 (OP_INC_PTR | 0x1
+ af3:0 | 8af3 | 80          ; #d8 OP_JMP_BCK
+ af4:0 | 8af4 | 82 8a       ; #d16 le(brace_open_02_051`16)
+ af6:0 | 8af6 |             ; brace_close_02_051:
+ af6:0 | 8af6 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ af7:0 | 8af7 | 70          ; #d8 OP_JMP_FWD
+ af8:0 | 8af8 | 14 8b       ; #d16 le(brace_close_02_052`16)
+ afa:0 | 8afa |             ; brace_open_02_052:
+ afa:0 | 8afa | 11          ; #d8 (OP_INC_PTR | 0x1
+ afb:0 | 8afb | 36          ; #d8 (OP_INC_VAL | 0x6
+ afc:0 | 8afc | 70          ; #d8 OP_JMP_FWD
+ afd:0 | 8afd | 06 8b       ; #d16 le(brace_close_03_023`16)
+ aff:0 | 8aff |             ; brace_open_03_023:
+ aff:0 | 8aff | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b00:0 | 8b00 | 38          ; #d8 (OP_INC_VAL | 0x8
+ b01:0 | 8b01 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b02:0 | 8b02 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b03:0 | 8b03 | 80          ; #d8 OP_JMP_BCK
+ b04:0 | 8b04 | ff 8a       ; #d16 le(brace_open_03_023`16)
+ b06:0 | 8b06 |             ; brace_close_03_023:
+ b06:0 | 8b06 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b07:0 | 8b07 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b08:0 | 8b08 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ b09:0 | 8b09 | 70          ; #d8 OP_JMP_FWD
+ b0a:0 | 8b0a | 10 8b       ; #d16 le(brace_close_03_024`16)
+ b0c:0 | 8b0c |             ; brace_open_03_024:
+ b0c:0 | 8b0c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b0d:0 | 8b0d | 80          ; #d8 OP_JMP_BCK
+ b0e:0 | 8b0e | 0c 8b       ; #d16 le(brace_open_03_024`16)
+ b10:0 | 8b10 |             ; brace_close_03_024:
+ b10:0 | 8b10 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b11:0 | 8b11 | 80          ; #d8 OP_JMP_BCK
+ b12:0 | 8b12 | fa 8a       ; #d16 le(brace_open_02_052`16)
+ b14:0 | 8b14 |             ; brace_close_02_052:
+ b14:0 | 8b14 | 80          ; #d8 OP_JMP_BCK
+ b15:0 | 8b15 | 74 8a       ; #d16 le(brace_open_01_066`16)
+ b17:0 | 8b17 |             ; brace_close_01_066:
+ b17:0 | 8b17 | 80          ; #d8 OP_JMP_BCK
+ b18:0 | 8b18 | 4b 8a       ; #d16 le(brace_open_00_041`16)
+ b1a:0 | 8b1a |             ; brace_close_00_041:
+ b1a:0 | 8b1a | 11          ; #d8 (OP_INC_PTR | 0x1
+ b1b:0 | 8b1b | 70          ; #d8 OP_JMP_FWD
+ b1c:0 | 8b1c | 4a 8c       ; #d16 le(brace_close_00_042`16)
+ b1e:0 | 8b1e |             ; brace_open_00_042:
+ b1e:0 | 8b1e | 11          ; #d8 (OP_INC_PTR | 0x1
+ b1f:0 | 8b1f | 70          ; #d8 OP_JMP_FWD
+ b20:0 | 8b20 | 26 8b       ; #d16 le(brace_close_01_067`16)
+ b22:0 | 8b22 |             ; brace_open_01_067:
+ b22:0 | 8b22 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b23:0 | 8b23 | 80          ; #d8 OP_JMP_BCK
+ b24:0 | 8b24 | 22 8b       ; #d16 le(brace_open_01_067`16)
+ b26:0 | 8b26 |             ; brace_close_01_067:
+ b26:0 | 8b26 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b27:0 | 8b27 | 70          ; #d8 OP_JMP_FWD
+ b28:0 | 8b28 | 2e 8b       ; #d16 le(brace_close_01_068`16)
+ b2a:0 | 8b2a |             ; brace_open_01_068:
+ b2a:0 | 8b2a | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b2b:0 | 8b2b | 80          ; #d8 OP_JMP_BCK
+ b2c:0 | 8b2c | 2a 8b       ; #d16 le(brace_open_01_068`16)
+ b2e:0 | 8b2e |             ; brace_close_01_068:
+ b2e:0 | 8b2e | 34          ; #d8 (OP_INC_VAL | 0x4
+ b2f:0 | 8b2f | 70          ; #d8 OP_JMP_FWD
+ b30:0 | 8b30 | 39 8b       ; #d16 le(brace_close_01_069`16)
+ b32:0 | 8b32 |             ; brace_open_01_069:
+ b32:0 | 8b32 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b33:0 | 8b33 | 38          ; #d8 (OP_INC_VAL | 0x8
+ b34:0 | 8b34 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b35:0 | 8b35 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b36:0 | 8b36 | 80          ; #d8 OP_JMP_BCK
+ b37:0 | 8b37 | 32 8b       ; #d16 le(brace_open_01_069`16)
+ b39:0 | 8b39 |             ; brace_close_01_069:
+ b39:0 | 8b39 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b3a:0 | 8b3a | 70          ; #d8 OP_JMP_FWD
+ b3b:0 | 8b3b | 44 8b       ; #d16 le(brace_close_01_070`16)
+ b3d:0 | 8b3d |             ; brace_open_01_070:
+ b3d:0 | 8b3d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b3e:0 | 8b3e | 38          ; #d8 (OP_INC_VAL | 0x8
+ b3f:0 | 8b3f | 11          ; #d8 (OP_INC_PTR | 0x1
+ b40:0 | 8b40 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b41:0 | 8b41 | 80          ; #d8 OP_JMP_BCK
+ b42:0 | 8b42 | 3d 8b       ; #d16 le(brace_open_01_070`16)
+ b44:0 | 8b44 |             ; brace_close_01_070:
+ b44:0 | 8b44 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b45:0 | 8b45 | 33          ; #d8 (OP_INC_VAL | 0x3
+ b46:0 | 8b46 | 70          ; #d8 OP_JMP_FWD
+ b47:0 | 8b47 | 50 8b       ; #d16 le(brace_close_01_071`16)
+ b49:0 | 8b49 |             ; brace_open_01_071:
+ b49:0 | 8b49 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b4a:0 | 8b4a | 38          ; #d8 (OP_INC_VAL | 0x8
+ b4b:0 | 8b4b | 11          ; #d8 (OP_INC_PTR | 0x1
+ b4c:0 | 8b4c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b4d:0 | 8b4d | 80          ; #d8 OP_JMP_BCK
+ b4e:0 | 8b4e | 49 8b       ; #d16 le(brace_open_01_071`16)
+ b50:0 | 8b50 |             ; brace_close_01_071:
+ b50:0 | 8b50 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b51:0 | 8b51 | 37          ; #d8 (OP_INC_VAL | 0x7
+ b52:0 | 8b52 | 70          ; #d8 OP_JMP_FWD
+ b53:0 | 8b53 | 5c 8b       ; #d16 le(brace_close_01_072`16)
+ b55:0 | 8b55 |             ; brace_open_01_072:
+ b55:0 | 8b55 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b56:0 | 8b56 | 48          ; #d8 (OP_DEC_VAL | 0x8
+ b57:0 | 8b57 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b58:0 | 8b58 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b59:0 | 8b59 | 80          ; #d8 OP_JMP_BCK
+ b5a:0 | 8b5a | 55 8b       ; #d16 le(brace_open_01_072`16)
+ b5c:0 | 8b5c |             ; brace_close_01_072:
+ b5c:0 | 8b5c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b5d:0 | 8b5d | 47          ; #d8 (OP_DEC_VAL | 0x7
+ b5e:0 | 8b5e | 11          ; #d8 (OP_INC_PTR | 0x1
+ b5f:0 | 8b5f | 31          ; #d8 (OP_INC_VAL | 0x1
+ b60:0 | 8b60 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b61:0 | 8b61 | 70          ; #d8 OP_JMP_FWD
+ b62:0 | 8b62 | 71 8b       ; #d16 le(brace_close_01_073`16)
+ b64:0 | 8b64 |             ; brace_open_01_073:
+ b64:0 | 8b64 | 70          ; #d8 OP_JMP_FWD
+ b65:0 | 8b65 | 6b 8b       ; #d16 le(brace_close_02_053`16)
+ b67:0 | 8b67 |             ; brace_open_02_053:
+ b67:0 | 8b67 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b68:0 | 8b68 | 80          ; #d8 OP_JMP_BCK
+ b69:0 | 8b69 | 67 8b       ; #d16 le(brace_open_02_053`16)
+ b6b:0 | 8b6b |             ; brace_close_02_053:
+ b6b:0 | 8b6b | 11          ; #d8 (OP_INC_PTR | 0x1
+ b6c:0 | 8b6c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b6d:0 | 8b6d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b6e:0 | 8b6e | 80          ; #d8 OP_JMP_BCK
+ b6f:0 | 8b6f | 64 8b       ; #d16 le(brace_open_01_073`16)
+ b71:0 | 8b71 |             ; brace_close_01_073:
+ b71:0 | 8b71 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b72:0 | 8b72 | 70          ; #d8 OP_JMP_FWD
+ b73:0 | 8b73 | c5 8b       ; #d16 le(brace_close_01_074`16)
+ b75:0 | 8b75 |             ; brace_open_01_074:
+ b75:0 | 8b75 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b76:0 | 8b76 | 70          ; #d8 OP_JMP_FWD
+ b77:0 | 8b77 | 7d 8b       ; #d16 le(brace_close_02_054`16)
+ b79:0 | 8b79 |             ; brace_open_02_054:
+ b79:0 | 8b79 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b7a:0 | 8b7a | 80          ; #d8 OP_JMP_BCK
+ b7b:0 | 8b7b | 79 8b       ; #d16 le(brace_open_02_054`16)
+ b7d:0 | 8b7d |             ; brace_close_02_054:
+ b7d:0 | 8b7d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b7e:0 | 8b7e | 70          ; #d8 OP_JMP_FWD
+ b7f:0 | 8b7f | 85 8b       ; #d16 le(brace_close_02_055`16)
+ b81:0 | 8b81 |             ; brace_open_02_055:
+ b81:0 | 8b81 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b82:0 | 8b82 | 80          ; #d8 OP_JMP_BCK
+ b83:0 | 8b83 | 81 8b       ; #d16 le(brace_open_02_055`16)
+ b85:0 | 8b85 |             ; brace_close_02_055:
+ b85:0 | 8b85 | 34          ; #d8 (OP_INC_VAL | 0x4
+ b86:0 | 8b86 | 70          ; #d8 OP_JMP_FWD
+ b87:0 | 8b87 | 90 8b       ; #d16 le(brace_close_02_056`16)
+ b89:0 | 8b89 |             ; brace_open_02_056:
+ b89:0 | 8b89 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b8a:0 | 8b8a | 11          ; #d8 (OP_INC_PTR | 0x1
+ b8b:0 | 8b8b | 38          ; #d8 (OP_INC_VAL | 0x8
+ b8c:0 | 8b8c | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b8d:0 | 8b8d | 80          ; #d8 OP_JMP_BCK
+ b8e:0 | 8b8e | 89 8b       ; #d16 le(brace_open_02_056`16)
+ b90:0 | 8b90 |             ; brace_close_02_056:
+ b90:0 | 8b90 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b91:0 | 8b91 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ b92:0 | 8b92 | 36          ; #d8 (OP_INC_VAL | 0x6
+ b93:0 | 8b93 | 70          ; #d8 OP_JMP_FWD
+ b94:0 | 8b94 | 9d 8b       ; #d16 le(brace_close_02_057`16)
+ b96:0 | 8b96 |             ; brace_open_02_057:
+ b96:0 | 8b96 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ b97:0 | 8b97 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b98:0 | 8b98 | 32          ; #d8 (OP_INC_VAL | 0x2
+ b99:0 | 8b99 | 11          ; #d8 (OP_INC_PTR | 0x1
+ b9a:0 | 8b9a | 80          ; #d8 OP_JMP_BCK
+ b9b:0 | 8b9b | 96 8b       ; #d16 le(brace_open_02_057`16)
+ b9d:0 | 8b9d |             ; brace_close_02_057:
+ b9d:0 | 8b9d | 21          ; #d8 (OP_DEC_PTR | 0x1
+ b9e:0 | 8b9e | 51          ; #d8 (OP_PUT_VAL | 0x1
+ b9f:0 | 8b9f | 70          ; #d8 OP_JMP_FWD
+ ba0:0 | 8ba0 | a9 8b       ; #d16 le(brace_close_02_058`16)
+ ba2:0 | 8ba2 |             ; brace_open_02_058:
+ ba2:0 | 8ba2 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ ba3:0 | 8ba3 | 11          ; #d8 (OP_INC_PTR | 0x1
+ ba4:0 | 8ba4 | 33          ; #d8 (OP_INC_VAL | 0x3
+ ba5:0 | 8ba5 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ ba6:0 | 8ba6 | 80          ; #d8 OP_JMP_BCK
+ ba7:0 | 8ba7 | a2 8b       ; #d16 le(brace_open_02_058`16)
+ ba9:0 | 8ba9 |             ; brace_close_02_058:
+ ba9:0 | 8ba9 | 11          ; #d8 (OP_INC_PTR | 0x1
+ baa:0 | 8baa | 32          ; #d8 (OP_INC_VAL | 0x2
+ bab:0 | 8bab | 51          ; #d8 (OP_PUT_VAL | 0x1
+ bac:0 | 8bac | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bad:0 | 8bad | 34          ; #d8 (OP_INC_VAL | 0x4
+ bae:0 | 8bae | 70          ; #d8 OP_JMP_FWD
+ baf:0 | 8baf | b8 8b       ; #d16 le(brace_close_02_059`16)
+ bb1:0 | 8bb1 |             ; brace_open_02_059:
+ bb1:0 | 8bb1 | 11          ; #d8 (OP_INC_PTR | 0x1
+ bb2:0 | 8bb2 | 44          ; #d8 (OP_DEC_VAL | 0x4
+ bb3:0 | 8bb3 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bb4:0 | 8bb4 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bb5:0 | 8bb5 | 80          ; #d8 OP_JMP_BCK
+ bb6:0 | 8bb6 | b1 8b       ; #d16 le(brace_open_02_059`16)
+ bb8:0 | 8bb8 |             ; brace_close_02_059:
+ bb8:0 | 8bb8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ bb9:0 | 8bb9 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ bba:0 | 8bba | 70          ; #d8 OP_JMP_FWD
+ bbb:0 | 8bbb | c1 8b       ; #d16 le(brace_close_02_060`16)
+ bbd:0 | 8bbd |             ; brace_open_02_060:
+ bbd:0 | 8bbd | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bbe:0 | 8bbe | 80          ; #d8 OP_JMP_BCK
+ bbf:0 | 8bbf | bd 8b       ; #d16 le(brace_open_02_060`16)
+ bc1:0 | 8bc1 |             ; brace_close_02_060:
+ bc1:0 | 8bc1 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bc2:0 | 8bc2 | 80          ; #d8 OP_JMP_BCK
+ bc3:0 | 8bc3 | 75 8b       ; #d16 le(brace_open_01_074`16)
+ bc5:0 | 8bc5 |             ; brace_close_01_074:
+ bc5:0 | 8bc5 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bc6:0 | 8bc6 | 70          ; #d8 OP_JMP_FWD
+ bc7:0 | 8bc7 | cd 8b       ; #d16 le(brace_close_01_075`16)
+ bc9:0 | 8bc9 |             ; brace_open_01_075:
+ bc9:0 | 8bc9 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bca:0 | 8bca | 80          ; #d8 OP_JMP_BCK
+ bcb:0 | 8bcb | c9 8b       ; #d16 le(brace_open_01_075`16)
+ bcd:0 | 8bcd |             ; brace_close_01_075:
+ bcd:0 | 8bcd | 11          ; #d8 (OP_INC_PTR | 0x1
+ bce:0 | 8bce | 70          ; #d8 OP_JMP_FWD
+ bcf:0 | 8bcf | d5 8b       ; #d16 le(brace_close_01_076`16)
+ bd1:0 | 8bd1 |             ; brace_open_01_076:
+ bd1:0 | 8bd1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bd2:0 | 8bd2 | 80          ; #d8 OP_JMP_BCK
+ bd3:0 | 8bd3 | d1 8b       ; #d16 le(brace_open_01_076`16)
+ bd5:0 | 8bd5 |             ; brace_close_01_076:
+ bd5:0 | 8bd5 | 38          ; #d8 (OP_INC_VAL | 0x8
+ bd6:0 | 8bd6 | 70          ; #d8 OP_JMP_FWD
+ bd7:0 | 8bd7 | e0 8b       ; #d16 le(brace_close_01_077`16)
+ bd9:0 | 8bd9 |             ; brace_open_01_077:
+ bd9:0 | 8bd9 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bda:0 | 8bda | 38          ; #d8 (OP_INC_VAL | 0x8
+ bdb:0 | 8bdb | 11          ; #d8 (OP_INC_PTR | 0x1
+ bdc:0 | 8bdc | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bdd:0 | 8bdd | 80          ; #d8 OP_JMP_BCK
+ bde:0 | 8bde | d9 8b       ; #d16 le(brace_open_01_077`16)
+ be0:0 | 8be0 |             ; brace_close_01_077:
+ be0:0 | 8be0 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ be1:0 | 8be1 | 70          ; #d8 OP_JMP_FWD
+ be2:0 | 8be2 | eb 8b       ; #d16 le(brace_close_01_078`16)
+ be4:0 | 8be4 |             ; brace_open_01_078:
+ be4:0 | 8be4 | 11          ; #d8 (OP_INC_PTR | 0x1
+ be5:0 | 8be5 | 34          ; #d8 (OP_INC_VAL | 0x4
+ be6:0 | 8be6 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ be7:0 | 8be7 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ be8:0 | 8be8 | 80          ; #d8 OP_JMP_BCK
+ be9:0 | 8be9 | e4 8b       ; #d16 le(brace_open_01_078`16)
+ beb:0 | 8beb |             ; brace_close_01_078:
+ beb:0 | 8beb | 31          ; #d8 (OP_INC_VAL | 0x1
+ bec:0 | 8bec | 11          ; #d8 (OP_INC_PTR | 0x1
+ bed:0 | 8bed | 70          ; #d8 OP_JMP_FWD
+ bee:0 | 8bee | fd 8b       ; #d16 le(brace_close_01_079`16)
+ bf0:0 | 8bf0 |             ; brace_open_01_079:
+ bf0:0 | 8bf0 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bf1:0 | 8bf1 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bf2:0 | 8bf2 | 11          ; #d8 (OP_INC_PTR | 0x1
+ bf3:0 | 8bf3 | 70          ; #d8 OP_JMP_FWD
+ bf4:0 | 8bf4 | fa 8b       ; #d16 le(brace_close_02_061`16)
+ bf6:0 | 8bf6 |             ; brace_open_02_061:
+ bf6:0 | 8bf6 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ bf7:0 | 8bf7 | 80          ; #d8 OP_JMP_BCK
+ bf8:0 | 8bf8 | f6 8b       ; #d16 le(brace_open_02_061`16)
+ bfa:0 | 8bfa |             ; brace_close_02_061:
+ bfa:0 | 8bfa | 80          ; #d8 OP_JMP_BCK
+ bfb:0 | 8bfb | f0 8b       ; #d16 le(brace_open_01_079`16)
+ bfd:0 | 8bfd |             ; brace_close_01_079:
+ bfd:0 | 8bfd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ bfe:0 | 8bfe | 70          ; #d8 OP_JMP_FWD
+ bff:0 | 8bff | 47 8c       ; #d16 le(brace_close_01_080`16)
+ c01:0 | 8c01 |             ; brace_open_01_080:
+ c01:0 | 8c01 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c02:0 | 8c02 | 70          ; #d8 OP_JMP_FWD
+ c03:0 | 8c03 | 09 8c       ; #d16 le(brace_close_02_062`16)
+ c05:0 | 8c05 |             ; brace_open_02_062:
+ c05:0 | 8c05 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c06:0 | 8c06 | 80          ; #d8 OP_JMP_BCK
+ c07:0 | 8c07 | 05 8c       ; #d16 le(brace_open_02_062`16)
+ c09:0 | 8c09 |             ; brace_close_02_062:
+ c09:0 | 8c09 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c0a:0 | 8c0a | 70          ; #d8 OP_JMP_FWD
+ c0b:0 | 8c0b | 11 8c       ; #d16 le(brace_close_02_063`16)
+ c0d:0 | 8c0d |             ; brace_open_02_063:
+ c0d:0 | 8c0d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c0e:0 | 8c0e | 80          ; #d8 OP_JMP_BCK
+ c0f:0 | 8c0f | 0d 8c       ; #d16 le(brace_open_02_063`16)
+ c11:0 | 8c11 |             ; brace_close_02_063:
+ c11:0 | 8c11 | 34          ; #d8 (OP_INC_VAL | 0x4
+ c12:0 | 8c12 | 70          ; #d8 OP_JMP_FWD
+ c13:0 | 8c13 | 1c 8c       ; #d16 le(brace_close_02_064`16)
+ c15:0 | 8c15 |             ; brace_open_02_064:
+ c15:0 | 8c15 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c16:0 | 8c16 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c17:0 | 8c17 | 38          ; #d8 (OP_INC_VAL | 0x8
+ c18:0 | 8c18 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c19:0 | 8c19 | 80          ; #d8 OP_JMP_BCK
+ c1a:0 | 8c1a | 15 8c       ; #d16 le(brace_open_02_064`16)
+ c1c:0 | 8c1c |             ; brace_close_02_064:
+ c1c:0 | 8c1c | 11          ; #d8 (OP_INC_PTR | 0x1
+ c1d:0 | 8c1d | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c1e:0 | 8c1e | 43          ; #d8 (OP_DEC_VAL | 0x3
+ c1f:0 | 8c1f | 70          ; #d8 OP_JMP_FWD
+ c20:0 | 8c20 | 29 8c       ; #d16 le(brace_close_02_065`16)
+ c22:0 | 8c22 |             ; brace_open_02_065:
+ c22:0 | 8c22 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c23:0 | 8c23 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c24:0 | 8c24 | 33          ; #d8 (OP_INC_VAL | 0x3
+ c25:0 | 8c25 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c26:0 | 8c26 | 80          ; #d8 OP_JMP_BCK
+ c27:0 | 8c27 | 22 8c       ; #d16 le(brace_open_02_065`16)
+ c29:0 | 8c29 |             ; brace_close_02_065:
+ c29:0 | 8c29 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c2a:0 | 8c2a | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c2b:0 | 8c2b | 43          ; #d8 (OP_DEC_VAL | 0x3
+ c2c:0 | 8c2c | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c2d:0 | 8c2d | 4e          ; #d8 (OP_DEC_VAL | 0xE
+ c2e:0 | 8c2e | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c2f:0 | 8c2f | 70          ; #d8 OP_JMP_FWD
+ c30:0 | 8c30 | 39 8c       ; #d16 le(brace_close_02_066`16)
+ c32:0 | 8c32 |             ; brace_open_02_066:
+ c32:0 | 8c32 | 42          ; #d8 (OP_DEC_VAL | 0x2
+ c33:0 | 8c33 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c34:0 | 8c34 | 31          ; #d8 (OP_INC_VAL | 0x1
+ c35:0 | 8c35 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c36:0 | 8c36 | 80          ; #d8 OP_JMP_BCK
+ c37:0 | 8c37 | 32 8c       ; #d16 le(brace_open_02_066`16)
+ c39:0 | 8c39 |             ; brace_close_02_066:
+ c39:0 | 8c39 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c3a:0 | 8c3a | 42          ; #d8 (OP_DEC_VAL | 0x2
+ c3b:0 | 8c3b | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c3c:0 | 8c3c | 70          ; #d8 OP_JMP_FWD
+ c3d:0 | 8c3d | 43 8c       ; #d16 le(brace_close_02_067`16)
+ c3f:0 | 8c3f |             ; brace_open_02_067:
+ c3f:0 | 8c3f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c40:0 | 8c40 | 80          ; #d8 OP_JMP_BCK
+ c41:0 | 8c41 | 3f 8c       ; #d16 le(brace_open_02_067`16)
+ c43:0 | 8c43 |             ; brace_close_02_067:
+ c43:0 | 8c43 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c44:0 | 8c44 | 80          ; #d8 OP_JMP_BCK
+ c45:0 | 8c45 | 01 8c       ; #d16 le(brace_open_01_080`16)
+ c47:0 | 8c47 |             ; brace_close_01_080:
+ c47:0 | 8c47 | 80          ; #d8 OP_JMP_BCK
+ c48:0 | 8c48 | 1e 8b       ; #d16 le(brace_open_00_042`16)
+ c4a:0 | 8c4a |             ; brace_close_00_042:
+ c4a:0 | 8c4a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c4b:0 | 8c4b | 38          ; #d8 (OP_INC_VAL | 0x8
+ c4c:0 | 8c4c | 70          ; #d8 OP_JMP_FWD
+ c4d:0 | 8c4d | 63 8c       ; #d16 le(brace_close_00_043`16)
+ c4f:0 | 8c4f |             ; brace_open_00_043:
+ c4f:0 | 8c4f | 70          ; #d8 OP_JMP_FWD
+ c50:0 | 8c50 | 56 8c       ; #d16 le(brace_close_01_081`16)
+ c52:0 | 8c52 |             ; brace_open_01_081:
+ c52:0 | 8c52 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c53:0 | 8c53 | 80          ; #d8 OP_JMP_BCK
+ c54:0 | 8c54 | 52 8c       ; #d16 le(brace_open_01_081`16)
+ c56:0 | 8c56 |             ; brace_close_01_081:
+ c56:0 | 8c56 | 31          ; #d8 (OP_INC_VAL | 0x1
+ c57:0 | 8c57 | 70          ; #d8 OP_JMP_FWD
+ c58:0 | 8c58 | 5e 8c       ; #d16 le(brace_close_01_082`16)
+ c5a:0 | 8c5a |             ; brace_open_01_082:
+ c5a:0 | 8c5a | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c5b:0 | 8c5b | 80          ; #d8 OP_JMP_BCK
+ c5c:0 | 8c5c | 5a 8c       ; #d16 le(brace_open_01_082`16)
+ c5e:0 | 8c5e |             ; brace_close_01_082:
+ c5e:0 | 8c5e | 11          ; #d8 (OP_INC_PTR | 0x1
+ c5f:0 | 8c5f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c60:0 | 8c60 | 80          ; #d8 OP_JMP_BCK
+ c61:0 | 8c61 | 4f 8c       ; #d16 le(brace_open_00_043`16)
+ c63:0 | 8c63 |             ; brace_close_00_043:
+ c63:0 | 8c63 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c64:0 | 8c64 | 70          ; #d8 OP_JMP_FWD
+ c65:0 | 8c65 | 6b 8c       ; #d16 le(brace_close_00_044`16)
+ c67:0 | 8c67 |             ; brace_open_00_044:
+ c67:0 | 8c67 | 11          ; #d8 (OP_INC_PTR | 0x1
+ c68:0 | 8c68 | 80          ; #d8 OP_JMP_BCK
+ c69:0 | 8c69 | 67 8c       ; #d16 le(brace_open_00_044`16)
+ c6b:0 | 8c6b |             ; brace_close_00_044:
+ c6b:0 | 8c6b | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c6c:0 | 8c6c | 70          ; #d8 OP_JMP_FWD
+ c6d:0 | 8c6d | 7a 8c       ; #d16 le(brace_close_00_045`16)
+ c6f:0 | 8c6f |             ; brace_open_00_045:
+ c6f:0 | 8c6f | 70          ; #d8 OP_JMP_FWD
+ c70:0 | 8c70 | 76 8c       ; #d16 le(brace_close_01_083`16)
+ c72:0 | 8c72 |             ; brace_open_01_083:
+ c72:0 | 8c72 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c73:0 | 8c73 | 80          ; #d8 OP_JMP_BCK
+ c74:0 | 8c74 | 72 8c       ; #d16 le(brace_open_01_083`16)
+ c76:0 | 8c76 |             ; brace_close_01_083:
+ c76:0 | 8c76 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ c77:0 | 8c77 | 80          ; #d8 OP_JMP_BCK
+ c78:0 | 8c78 | 6f 8c       ; #d16 le(brace_open_00_045`16)
+ c7a:0 | 8c7a |             ; brace_close_00_045:
+ c7a:0 | 8c7a | 70          ; #d8 OP_JMP_FWD
+ c7b:0 | 8c7b | 81 8c       ; #d16 le(brace_close_00_046`16)
+ c7d:0 | 8c7d |             ; brace_open_00_046:
+ c7d:0 | 8c7d | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c7e:0 | 8c7e | 80          ; #d8 OP_JMP_BCK
+ c7f:0 | 8c7f | 7d 8c       ; #d16 le(brace_open_00_046`16)
+ c81:0 | 8c81 |             ; brace_close_00_046:
+ c81:0 | 8c81 | 3a          ; #d8 (OP_INC_VAL | 0xA
+ c82:0 | 8c82 | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c83:0 | 8c83 | 70          ; #d8 OP_JMP_FWD
+ c84:0 | 8c84 | 8a 8c       ; #d16 le(brace_close_00_047`16)
+ c86:0 | 8c86 |             ; brace_open_00_047:
+ c86:0 | 8c86 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ c87:0 | 8c87 | 80          ; #d8 OP_JMP_BCK
+ c88:0 | 8c88 | 86 8c       ; #d16 le(brace_open_00_047`16)
+ c8a:0 | 8c8a |             ; brace_close_00_047:
+ c8a:0 | 8c8a | 70          ; #d8 OP_JMP_FWD
+ c8b:0 | 8c8b | 92 8c       ; #d16 le(brace_close_00_048`16)
+ c8d:0 | 8c8d |             ; brace_open_00_048:
+ c8d:0 | 8c8d | 62          ; #d8 (OP_GET_VAL | 0x2
+ c8e:0 | 8c8e | 51          ; #d8 (OP_PUT_VAL | 0x1
+ c8f:0 | 8c8f | 80          ; #d8 OP_JMP_BCK
+ c90:0 | 8c90 | 8d 8c       ; #d16 le(brace_open_00_048`16)
+ c92:0 | 8c92 |             ; brace_close_00_048:
+ c92:0 | 8c92 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ c93:0 | 8c93 | 00          ; #d8 OP_END

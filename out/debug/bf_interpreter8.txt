@@ -1,0 +1,307 @@
+  outp | addr | data
+
+  --:- |    0 |             ; bf_pc:
+  --:- |    2 |             ; bf_ptr:
+  --:- |    4 |             ; count:
+  --:- |  200 |             ; bf_data_seg:
+   0:0 | 8000 |             ; bf_interpreter:
+   0:0 | 8000 | 68 ff       ; mov # 0xFF, sp
+   2:0 | 8002 | 78 01       ; outmode text
+   4:0 | 8004 | 08 83       ; mov # (bf_code_seg & 0xFF), a
+   6:0 | 8006 | 28 00       ; mov a, bf_pc
+   8:0 | 8008 | 08 82       ; mov # (bf_code_seg >> 8), a
+   a:0 | 800a | 28 01       ; mov a, (bf_pc+1)
+   c:0 | 800c | 08 00       ; mov # (bf_data_seg & 0xFF), a
+   e:0 | 800e | 28 02       ; mov a, bf_ptr
+  10:0 | 8010 | 08 02       ; mov # (bf_data_seg >> 8), a
+  12:0 | 8012 | 28 03       ; mov a, (bf_ptr+1)
+  14:0 | 8014 |             ; interpreter_loop:
+  14:0 | 8014 | 39 00 00    ; mov bf_pc, b
+  17:0 | 8017 | 49 01 00    ; mov (bf_pc+1), x
+  1a:0 | 801a | 0b          ; mov (x,b), a
+  1b:0 | 801b | 12          ; mov a, x
+  1c:0 | 801c | 64 0f       ; and # 0x0F, a
+  1e:0 | 801e | 28 04       ; mov a, count
+  20:0 | 8020 | 13          ; mov x, a
+  21:0 | 8021 | 64 f0       ; and # 0xF0, a
+  23:0 | 8023 | 12          ; mov a, x
+  24:0 | 8024 | 1d 82       ; jmp (opcode_branch_table, x)
+  26:0 | 8026 |             ; case_inc_ptr:
+  26:0 | 8026 | 18 02       ; mov bf_ptr, a
+  28:0 | 8028 | 02 04 04    ; add count, a
+  2b:0 | 802b | 28 02       ; mov a, bf_ptr
+  2d:0 | 802d | 18 03       ; mov (bf_ptr+1), a
+  2f:0 | 802f | 24 00       ; addc # 0x00, a
+  31:0 | 8031 | 28 03       ; mov a, (bf_ptr+1)
+  33:0 | 8033 | 1c f6 80    ; jmp inc_pc
+  36:0 | 8036 |             ; case_dec_ptr:
+  36:0 | 8036 | 18 02       ; mov bf_ptr, a
+  38:0 | 8038 | 03 15 04 00 ; sub count, a
+  3c:0 | 803c | 28 02       ; mov a, bf_ptr
+  3e:0 | 803e | 18 03       ; mov (bf_ptr+1), a
+  40:0 | 8040 | 24 ff       ; subc # 0x00, a
+  42:0 | 8042 | 28 03       ; mov a, (bf_ptr+1)
+  44:0 | 8044 | 1c f6 80    ; jmp inc_pc
+  47:0 | 8047 |             ; case_inc_val:
+  47:0 | 8047 | 39 02 00    ; mov bf_ptr, b
+  4a:0 | 804a | 49 03 00    ; mov (bf_ptr+1), x
+  4d:0 | 804d | 5e          ; push b
+  4e:0 | 804e | 0b          ; mov (x,b), a
+  4f:0 | 804f | 02 04 04    ; add count, a
+  52:0 | 8052 | 5f          ; pop b
+  53:0 | 8053 | 1b          ; mov a, (x,b)
+  54:0 | 8054 | 1c f6 80    ; jmp inc_pc
+  57:0 | 8057 |             ; case_dec_val:
+  57:0 | 8057 | 39 02 00    ; mov bf_ptr, b
+  5a:0 | 805a | 49 03 00    ; mov (bf_ptr+1), x
+  5d:0 | 805d | 5e          ; push b
+  5e:0 | 805e | 0b          ; mov (x,b), a
+  5f:0 | 805f | 03 15 04 00 ; sub count, a
+  63:0 | 8063 | 5f          ; pop b
+  64:0 | 8064 | 1b          ; mov a, (x,b)
+  65:0 | 8065 | 1c f6 80    ; jmp inc_pc
+  68:0 | 8068 |             ; case_put_val:
+  68:0 | 8068 | 39 02 00    ; mov bf_ptr, b
+  6b:0 | 806b | 49 03 00    ; mov (bf_ptr+1), x
+  6e:0 | 806e | 0b          ; mov (x,b), a
+  6f:0 | 806f | 71          ; out a
+  70:0 | 8070 | 1c f6 80    ; jmp inc_pc
+  73:0 | 8073 |             ; case_get_val:
+  73:0 | 8073 | 39 02 00    ; mov bf_ptr, b
+  76:0 | 8076 | 49 03 00    ; mov (bf_ptr+1), x
+  79:0 | 8079 | 40          ; mov ina, a
+  7a:0 | 807a | 1b          ; mov a, (x,b)
+  7b:0 | 807b | 1c f6 80    ; jmp inc_pc
+  7e:0 | 807e |             ; case_jmp_fwd:
+  7e:0 | 807e | 18 00       ; mov bf_pc, a
+  80:0 | 8080 | 02 24 01    ; add # 0x01, a
+  83:0 | 8083 | 28 00       ; mov a, bf_pc
+  85:0 | 8085 | 18 01       ; mov (bf_pc+1), a
+  87:0 | 8087 | 24 00       ; addc # 0x00, a
+  89:0 | 8089 | 28 01       ; mov a, (bf_pc+1)
+  8b:0 | 808b | 39 00 00    ; mov bf_pc, b
+  8e:0 | 808e | 12          ; mov a, x
+  8f:0 | 808f | 0b          ; mov (x,b), a
+  90:0 | 8090 | 4e          ; push a
+  91:0 | 8091 | 18 00       ; mov bf_pc, a
+  93:0 | 8093 | 02 24 01    ; add # 0x01, a
+  96:0 | 8096 | 28 00       ; mov a, bf_pc
+  98:0 | 8098 | 18 01       ; mov (bf_pc+1), a
+  9a:0 | 809a | 24 00       ; addc # 0x00, a
+  9c:0 | 809c | 28 01       ; mov a, (bf_pc+1)
+  9e:0 | 809e | 39 00 00    ; mov bf_pc, b
+  a1:0 | 80a1 | 12          ; mov a, x
+  a2:0 | 80a2 | 0b          ; mov (x,b), a
+  a3:0 | 80a3 | 4e          ; push a
+  a4:0 | 80a4 | 39 02 00    ; mov bf_ptr, b
+  a7:0 | 80a7 | 49 03 00    ; mov (bf_ptr+1), x
+  aa:0 | 80aa | 0b          ; mov (x,b), a
+  ab:0 | 80ab | 54 00       ; or # 0x00, a
+  ad:0 | 80ad | 5f          ; pop b
+  ae:0 | 80ae | 4f          ; pop a
+  af:0 | 80af | 5c f6 80    ; jnz inc_pc
+  b2:0 | 80b2 | 28 00       ; mov a, bf_pc
+  b4:0 | 80b4 | 29 01 00    ; mov b, (bf_pc+1)
+  b7:0 | 80b7 | 1c 14 80    ; jmp interpreter_loop
+  ba:0 | 80ba |             ; case_jmp_bck:
+  ba:0 | 80ba | 18 00       ; mov bf_pc, a
+  bc:0 | 80bc | 02 24 01    ; add # 0x01, a
+  bf:0 | 80bf | 28 00       ; mov a, bf_pc
+  c1:0 | 80c1 | 18 01       ; mov (bf_pc+1), a
+  c3:0 | 80c3 | 24 00       ; addc # 0x00, a
+  c5:0 | 80c5 | 28 01       ; mov a, (bf_pc+1)
+  c7:0 | 80c7 | 39 00 00    ; mov bf_pc, b
+  ca:0 | 80ca | 12          ; mov a, x
+  cb:0 | 80cb | 0b          ; mov (x,b), a
+  cc:0 | 80cc | 4e          ; push a
+  cd:0 | 80cd | 18 00       ; mov bf_pc, a
+  cf:0 | 80cf | 02 24 01    ; add # 0x01, a
+  d2:0 | 80d2 | 28 00       ; mov a, bf_pc
+  d4:0 | 80d4 | 18 01       ; mov (bf_pc+1), a
+  d6:0 | 80d6 | 24 00       ; addc # 0x00, a
+  d8:0 | 80d8 | 28 01       ; mov a, (bf_pc+1)
+  da:0 | 80da | 39 00 00    ; mov bf_pc, b
+  dd:0 | 80dd | 12          ; mov a, x
+  de:0 | 80de | 0b          ; mov (x,b), a
+  df:0 | 80df | 4e          ; push a
+  e0:0 | 80e0 | 39 02 00    ; mov bf_ptr, b
+  e3:0 | 80e3 | 49 03 00    ; mov (bf_ptr+1), x
+  e6:0 | 80e6 | 0b          ; mov (x,b), a
+  e7:0 | 80e7 | 54 00       ; or # 0x00, a
+  e9:0 | 80e9 | 5f          ; pop b
+  ea:0 | 80ea | 4f          ; pop a
+  eb:0 | 80eb | 4c f6 80    ; jz inc_pc
+  ee:0 | 80ee | 28 00       ; mov a, bf_pc
+  f0:0 | 80f0 | 29 01 00    ; mov b, (bf_pc+1)
+  f3:0 | 80f3 | 1c 14 80    ; jmp interpreter_loop
+  f6:0 | 80f6 |             ; inc_pc:
+  f6:0 | 80f6 | 18 00       ; mov bf_pc, a
+  f8:0 | 80f8 | 02 24 01    ; add # 0x01, a
+  fb:0 | 80fb | 28 00       ; mov a, bf_pc
+  fd:0 | 80fd | 18 01       ; mov (bf_pc+1), a
+  ff:0 | 80ff | 24 00       ; addc # 0x00, a
+ 101:0 | 8101 | 28 01       ; mov a, (bf_pc+1)
+ 103:0 | 8103 | 1c 14 80    ; jmp interpreter_loop
+ 200:0 | 8200 |             ; opcode_branch_table:
+ 200:0 | 8200 | 01          ; hlt
+ 210:0 | 8210 | 1c 26 80    ; jmp case_inc_ptr
+ 220:0 | 8220 | 1c 36 80    ; jmp case_dec_ptr
+ 230:0 | 8230 | 1c 47 80    ; jmp case_inc_val
+ 240:0 | 8240 | 1c 57 80    ; jmp case_dec_val
+ 250:0 | 8250 | 1c 68 80    ; jmp case_put_val
+ 260:0 | 8260 | 1c 73 80    ; jmp case_get_val
+ 270:0 | 8270 | 1c 7e 80    ; jmp case_jmp_fwd
+ 280:0 | 8280 | 1c ba 80    ; jmp case_jmp_bck
+ 283:0 | 8283 |             ; bf_code_seg:
+ 283:0 | 8283 | 3d          ; #d8 (OP_INC_VAL | 0xD
+ 284:0 | 8284 | 70          ; #d8 OP_JMP_FWD
+ 285:0 | 8285 | 92 82       ; #d16 le(brace_close_00_000`16)
+ 287:0 | 8287 |             ; brace_open_00_000:
+ 287:0 | 8287 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 288:0 | 8288 | 32          ; #d8 (OP_INC_VAL | 0x2
+ 289:0 | 8289 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 28a:0 | 828a | 35          ; #d8 (OP_INC_VAL | 0x5
+ 28b:0 | 828b | 11          ; #d8 (OP_INC_PTR | 0x1
+ 28c:0 | 828c | 37          ; #d8 (OP_INC_VAL | 0x7
+ 28d:0 | 828d | 23          ; #d8 (OP_DEC_PTR | 0x3
+ 28e:0 | 828e | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 28f:0 | 828f | 80          ; #d8 OP_JMP_BCK
+ 290:0 | 8290 | 87 82       ; #d16 le(brace_open_00_000`16)
+ 292:0 | 8292 |             ; brace_close_00_000:
+ 292:0 | 8292 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 293:0 | 8293 | 70          ; #d8 OP_JMP_FWD
+ 294:0 | 8294 | 1a 83       ; #d16 le(brace_close_00_001`16)
+ 296:0 | 8296 |             ; brace_open_00_001:
+ 296:0 | 8296 | 70          ; #d8 OP_JMP_FWD
+ 297:0 | 8297 | a0 82       ; #d16 le(brace_close_01_000`16)
+ 299:0 | 8299 |             ; brace_open_01_000:
+ 299:0 | 8299 | 15          ; #d8 (OP_INC_PTR | 0x5
+ 29a:0 | 829a | 31          ; #d8 (OP_INC_VAL | 0x1
+ 29b:0 | 829b | 25          ; #d8 (OP_DEC_PTR | 0x5
+ 29c:0 | 829c | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 29d:0 | 829d | 80          ; #d8 OP_JMP_BCK
+ 29e:0 | 829e | 99 82       ; #d16 le(brace_open_01_000`16)
+ 2a0:0 | 82a0 |             ; brace_close_01_000:
+ 2a0:0 | 82a0 | 15          ; #d8 (OP_INC_PTR | 0x5
+ 2a1:0 | 82a1 | 70          ; #d8 OP_JMP_FWD
+ 2a2:0 | 82a2 | af 82       ; #d16 le(brace_close_01_001`16)
+ 2a4:0 | 82a4 |             ; brace_open_01_001:
+ 2a4:0 | 82a4 | 25          ; #d8 (OP_DEC_PTR | 0x5
+ 2a5:0 | 82a5 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2a6:0 | 82a6 | 13          ; #d8 (OP_INC_PTR | 0x3
+ 2a7:0 | 82a7 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2a8:0 | 82a8 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2a9:0 | 82a9 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2aa:0 | 82aa | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2ab:0 | 82ab | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2ac:0 | 82ac | 80          ; #d8 OP_JMP_BCK
+ 2ad:0 | 82ad | a4 82       ; #d16 le(brace_open_01_001`16)
+ 2af:0 | 82af |             ; brace_close_01_001:
+ 2af:0 | 82af | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 2b0:0 | 82b0 | 70          ; #d8 OP_JMP_FWD
+ 2b1:0 | 82b1 | ba 82       ; #d16 le(brace_close_01_002`16)
+ 2b3:0 | 82b3 |             ; brace_open_01_002:
+ 2b3:0 | 82b3 | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2b4:0 | 82b4 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2b5:0 | 82b5 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2b6:0 | 82b6 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2b7:0 | 82b7 | 80          ; #d8 OP_JMP_BCK
+ 2b8:0 | 82b8 | b3 82       ; #d16 le(brace_open_01_002`16)
+ 2ba:0 | 82ba |             ; brace_close_01_002:
+ 2ba:0 | 82ba | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2bb:0 | 82bb | 70          ; #d8 OP_JMP_FWD
+ 2bc:0 | 82bc | c6 82       ; #d16 le(brace_close_01_003`16)
+ 2be:0 | 82be |             ; brace_open_01_003:
+ 2be:0 | 82be | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 2bf:0 | 82bf | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2c0:0 | 82c0 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2c1:0 | 82c1 | 12          ; #d8 (OP_INC_PTR | 0x2
+ 2c2:0 | 82c2 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2c3:0 | 82c3 | 80          ; #d8 OP_JMP_BCK
+ 2c4:0 | 82c4 | be 82       ; #d16 le(brace_open_01_003`16)
+ 2c6:0 | 82c6 |             ; brace_close_01_003:
+ 2c6:0 | 82c6 | 25          ; #d8 (OP_DEC_PTR | 0x5
+ 2c7:0 | 82c7 | 70          ; #d8 OP_JMP_FWD
+ 2c8:0 | 82c8 | d1 82       ; #d16 le(brace_close_01_004`16)
+ 2ca:0 | 82ca |             ; brace_open_01_004:
+ 2ca:0 | 82ca | 15          ; #d8 (OP_INC_PTR | 0x5
+ 2cb:0 | 82cb | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2cc:0 | 82cc | 25          ; #d8 (OP_DEC_PTR | 0x5
+ 2cd:0 | 82cd | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2ce:0 | 82ce | 80          ; #d8 OP_JMP_BCK
+ 2cf:0 | 82cf | ca 82       ; #d16 le(brace_open_01_004`16)
+ 2d1:0 | 82d1 |             ; brace_close_01_004:
+ 2d1:0 | 82d1 | 15          ; #d8 (OP_INC_PTR | 0x5
+ 2d2:0 | 82d2 | 70          ; #d8 OP_JMP_FWD
+ 2d3:0 | 82d3 | de 82       ; #d16 le(brace_close_01_005`16)
+ 2d5:0 | 82d5 |             ; brace_open_01_005:
+ 2d5:0 | 82d5 | 25          ; #d8 (OP_DEC_PTR | 0x5
+ 2d6:0 | 82d6 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2d7:0 | 82d7 | 14          ; #d8 (OP_INC_PTR | 0x4
+ 2d8:0 | 82d8 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2d9:0 | 82d9 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2da:0 | 82da | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2db:0 | 82db | 80          ; #d8 OP_JMP_BCK
+ 2dc:0 | 82dc | d5 82       ; #d16 le(brace_open_01_005`16)
+ 2de:0 | 82de |             ; brace_close_01_005:
+ 2de:0 | 82de | 23          ; #d8 (OP_DEC_PTR | 0x3
+ 2df:0 | 82df | 70          ; #d8 OP_JMP_FWD
+ 2e0:0 | 82e0 | e9 82       ; #d16 le(brace_close_01_006`16)
+ 2e2:0 | 82e2 |             ; brace_open_01_006:
+ 2e2:0 | 82e2 | 14          ; #d8 (OP_INC_PTR | 0x4
+ 2e3:0 | 82e3 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2e4:0 | 82e4 | 24          ; #d8 (OP_DEC_PTR | 0x4
+ 2e5:0 | 82e5 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2e6:0 | 82e6 | 80          ; #d8 OP_JMP_BCK
+ 2e7:0 | 82e7 | e2 82       ; #d16 le(brace_open_01_006`16)
+ 2e9:0 | 82e9 |             ; brace_close_01_006:
+ 2e9:0 | 82e9 | 14          ; #d8 (OP_INC_PTR | 0x4
+ 2ea:0 | 82ea | 70          ; #d8 OP_JMP_FWD
+ 2eb:0 | 82eb | f6 82       ; #d16 le(brace_close_01_007`16)
+ 2ed:0 | 82ed |             ; brace_open_01_007:
+ 2ed:0 | 82ed | 24          ; #d8 (OP_DEC_PTR | 0x4
+ 2ee:0 | 82ee | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2ef:0 | 82ef | 13          ; #d8 (OP_INC_PTR | 0x3
+ 2f0:0 | 82f0 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2f1:0 | 82f1 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2f2:0 | 82f2 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2f3:0 | 82f3 | 80          ; #d8 OP_JMP_BCK
+ 2f4:0 | 82f4 | ed 82       ; #d16 le(brace_open_01_007`16)
+ 2f6:0 | 82f6 |             ; brace_close_01_007:
+ 2f6:0 | 82f6 | 22          ; #d8 (OP_DEC_PTR | 0x2
+ 2f7:0 | 82f7 | 70          ; #d8 OP_JMP_FWD
+ 2f8:0 | 82f8 | 02 83       ; #d16 le(brace_close_01_008`16)
+ 2fa:0 | 82fa |             ; brace_open_01_008:
+ 2fa:0 | 82fa | 11          ; #d8 (OP_INC_PTR | 0x1
+ 2fb:0 | 82fb | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 2fc:0 | 82fc | 31          ; #d8 (OP_INC_VAL | 0x1
+ 2fd:0 | 82fd | 21          ; #d8 (OP_DEC_PTR | 0x1
+ 2fe:0 | 82fe | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 2ff:0 | 82ff | 80          ; #d8 OP_JMP_BCK
+ 300:0 | 8300 | fa 82       ; #d16 le(brace_open_01_008`16)
+ 302:0 | 8302 |             ; brace_close_01_008:
+ 302:0 | 8302 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 303:0 | 8303 | 70          ; #d8 OP_JMP_FWD
+ 304:0 | 8304 | 0a 83       ; #d16 le(brace_close_01_009`16)
+ 306:0 | 8306 |             ; brace_open_01_009:
+ 306:0 | 8306 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 307:0 | 8307 | 80          ; #d8 OP_JMP_BCK
+ 308:0 | 8308 | 06 83       ; #d16 le(brace_open_01_009`16)
+ 30a:0 | 830a |             ; brace_close_01_009:
+ 30a:0 | 830a | 3a          ; #d8 (OP_INC_VAL | 0xA
+ 30b:0 | 830b | 51          ; #d8 (OP_PUT_VAL | 0x1
+ 30c:0 | 830c | 70          ; #d8 OP_JMP_FWD
+ 30d:0 | 830d | 13 83       ; #d16 le(brace_close_01_010`16)
+ 30f:0 | 830f |             ; brace_open_01_010:
+ 30f:0 | 830f | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 310:0 | 8310 | 80          ; #d8 OP_JMP_BCK
+ 311:0 | 8311 | 0f 83       ; #d16 le(brace_open_01_010`16)
+ 313:0 | 8313 |             ; brace_close_01_010:
+ 313:0 | 8313 | 25          ; #d8 (OP_DEC_PTR | 0x5
+ 314:0 | 8314 | 31          ; #d8 (OP_INC_VAL | 0x1
+ 315:0 | 8315 | 11          ; #d8 (OP_INC_PTR | 0x1
+ 316:0 | 8316 | 41          ; #d8 (OP_DEC_VAL | 0x1
+ 317:0 | 8317 | 80          ; #d8 OP_JMP_BCK
+ 318:0 | 8318 | 96 82       ; #d16 le(brace_open_00_001`16)
+ 31a:0 | 831a |             ; brace_close_00_001:
+ 31a:0 | 831a | 00          ; #d8 OP_END

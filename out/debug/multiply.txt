@@ -1,0 +1,121 @@
+ outp | addr | data
+
+ --:- |    0 |             ; multiplicand:
+ --:- |    2 |             ; multiplier:
+ --:- |    4 |             ; mul_mask:
+  0:0 | 8000 |             ; start:
+  0:0 | 8000 | 68 ff       ; mov # 0xFF, sp
+  2:0 | 8002 | 78 00       ; outmode ux
+  4:0 | 8004 | 08 12       ; mov # 0x12, a
+  6:0 | 8006 | 28 00       ; mov a, multiplicand
+  8:0 | 8008 | 08 34       ; mov # 0x34, a
+  a:0 | 800a | 28 01       ; mov a, (multiplicand + 1)
+  c:0 | 800c | 08 05       ; mov # 0x05, a
+  e:0 | 800e | 28 02       ; mov a, multiplier
+ 10:0 | 8010 | 08 00       ; mov # 0x00, a
+ 12:0 | 8012 | 0c 67 80    ; jsr multiply_16x8to16
+ 15:0 | 8015 | 73          ; out x
+ 16:0 | 8016 | 71          ; out a
+ 17:0 | 8017 | 01          ; hlt
+ 18:0 | 8018 |             ; multiply_8x8to8:
+ 18:0 | 8018 | 58 00       ; push # 0
+ 1a:0 | 801a | 38 01       ; mov # 0b1, b
+ 1c:0 | 801c |             ; .loop:
+ 1c:0 | 801c | 18 02       ; mov multiplier, a
+ 1e:0 | 801e | 63          ; and b, a
+ 1f:0 | 801f | 59 04 00    ; mov x, mul_mask
+ 22:0 | 8022 | 4c 2a 80    ; jz .skip_add
+ 25:0 | 8025 | 4f          ; pop a
+ 26:0 | 8026 | 02 04 00    ; add multiplicand, a
+ 29:0 | 8029 | 4e          ; push a
+ 2a:0 | 802a |             ; .skip_add:
+ 2a:0 | 802a | 02 05 00 00 ; rol multiplicand, 0
+ 2e:0 | 802e | 49 04 00    ; mov mul_mask,x
+ 31:0 | 8031 | 02 0f       ; rol b, 0
+ 33:0 | 8033 | 5c 1c 80    ; jnz .loop
+ 36:0 | 8036 | 4f          ; pop a
+ 37:0 | 8037 | 5b          ; rts
+ 38:0 | 8038 |             ; multiply_8x8to16:
+ 38:0 | 8038 | 08 00       ; mov # 0, a
+ 3a:0 | 803a | 4e          ; push a
+ 3b:0 | 803b | 4e          ; push a
+ 3c:0 | 803c | 28 01       ; mov a, (multiplicand + 1)
+ 3e:0 | 803e | 38 01       ; mov # 0b1, b
+ 40:0 | 8040 |             ; .loop:
+ 40:0 | 8040 | 18 02       ; mov multiplier, a
+ 42:0 | 8042 | 63          ; and b, a
+ 43:0 | 8043 | 29 04 00    ; mov b, mul_mask
+ 46:0 | 8046 | 4c 55 80    ; jz .skip_add
+ 49:0 | 8049 | 4f          ; pop a
+ 4a:0 | 804a | 02 04 00    ; add multiplicand, a
+ 4d:0 | 804d | 5f          ; pop b
+ 4e:0 | 804e | 4e          ; push a
+ 4f:0 | 804f | 35 01 00    ; addc (multiplicand + 1), b
+ 52:0 | 8052 | 4f          ; pop a
+ 53:0 | 8053 | 5e          ; push b
+ 54:0 | 8054 | 4e          ; push a
+ 55:0 | 8055 |             ; .skip_add:
+ 55:0 | 8055 | 02 05 00 00 ; rol multiplicand, 0
+ 59:0 | 8059 | 05 01 00    ; rolc (multiplicand+1)
+ 5c:0 | 805c | 39 04 00    ; mov mul_mask, b
+ 5f:0 | 805f | 02 0f       ; rol b, 0
+ 61:0 | 8061 | 5c 40 80    ; jnz .loop
+ 64:0 | 8064 | 4f          ; pop a
+ 65:0 | 8065 | 6f          ; pop x
+ 66:0 | 8066 | 5b          ; rts
+ 67:0 | 8067 |             ; multiply_16x8to16:
+ 67:0 | 8067 | 58 00       ; push # 0
+ 69:0 | 8069 | 58 00       ; push # 0
+ 6b:0 | 806b | 38 01       ; mov # 0b1, b
+ 6d:0 | 806d |             ; .loop:
+ 6d:0 | 806d | 18 02       ; mov multiplier, a
+ 6f:0 | 806f | 63          ; and b, a
+ 70:0 | 8070 | 29 04 00    ; mov b, mul_mask
+ 73:0 | 8073 | 4c 82 80    ; jz .skip_add
+ 76:0 | 8076 | 4f          ; pop a
+ 77:0 | 8077 | 02 04 00    ; add multiplicand, a
+ 7a:0 | 807a | 5f          ; pop b
+ 7b:0 | 807b | 4e          ; push a
+ 7c:0 | 807c | 35 01 00    ; addc (multiplicand + 1), b
+ 7f:0 | 807f | 4f          ; pop a
+ 80:0 | 8080 | 5e          ; push b
+ 81:0 | 8081 | 4e          ; push a
+ 82:0 | 8082 |             ; .skip_add:
+ 82:0 | 8082 | 02 05 00 00 ; rol multiplicand, 0
+ 86:0 | 8086 | 05 01 00    ; rolc (multiplicand+1)
+ 89:0 | 8089 | 39 04 00    ; mov mul_mask, b
+ 8c:0 | 808c | 02 0f       ; rol b, 0
+ 8e:0 | 808e | 5c 6d 80    ; jnz .loop
+ 91:0 | 8091 | 4f          ; pop a
+ 92:0 | 8092 | 6f          ; pop x
+ 93:0 | 8093 | 5b          ; rts
+ 94:0 | 8094 |             ; multiply_16x16to16:
+ 94:0 | 8094 | 08 00       ; mov # 0, a
+ 96:0 | 8096 | 4e          ; push a
+ 97:0 | 8097 | 12          ; mov a, x
+ 98:0 | 8098 | 28 05       ; mov a, (mul_mask + 1)
+ 9a:0 | 809a | 08 01       ; mov # 0b1, a
+ 9c:0 | 809c | 28 04       ; mov a, mul_mask
+ 9e:0 | 809e |             ; .loop:
+ 9e:0 | 809e | 18 02       ; mov multiplier, a
+ a0:0 | 80a0 | 65 04 00    ; and mul_mask, a
+ a3:0 | 80a3 | 5c ae 80    ; jnz .add
+ a6:0 | 80a6 | 18 03       ; mov (multiplier + 1), a
+ a8:0 | 80a8 | 65 05 00    ; and (mul_mask + 1), a
+ ab:0 | 80ab | 4c b7 80    ; jz .skip_add
+ ae:0 | 80ae |             ; .add:
+ ae:0 | 80ae | 4f          ; pop a
+ af:0 | 80af | 02 04 00    ; add multiplicand, a
+ b2:0 | 80b2 | 4e          ; push a
+ b3:0 | 80b3 | 13          ; mov x, a
+ b4:0 | 80b4 | 04 01       ; addc (multiplicand + 1), a
+ b6:0 | 80b6 | 12          ; mov a, x
+ b7:0 | 80b7 |             ; .skip_add:
+ b7:0 | 80b7 | 02 05 00 00 ; rol multiplicand, 0
+ bb:0 | 80bb | 05 01 00    ; rolc (multiplicand + 1)
+ be:0 | 80be | 02 05 04 00 ; rol mul_mask, 0
+ c2:0 | 80c2 | 5c 9e 80    ; jnz .loop
+ c5:0 | 80c5 | 05 05 00    ; rolc (mul_mask + 1)
+ c8:0 | 80c8 | 5c 9e 80    ; jnz .loop
+ cb:0 | 80cb | 4f          ; pop a
+ cc:0 | 80cc | 5b          ; rts

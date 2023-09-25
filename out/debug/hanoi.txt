@@ -1,0 +1,296 @@
+  outp | addr | data
+
+  --:- |    0 |          ; blank_tiles:
+  --:- |    1 |          ; fill_tiles:
+  --:- |    2 |          ; from_sp:
+  --:- |    3 |          ; to_sp:
+  --:- |    4 |          ; aux_sp:
+  --:- |    5 |          ; from:
+  --:- |    6 |          ; to:
+  --:- |    7 |          ; aux:
+  --:- |  200 |          ; vis_from_stack:
+  --:- |  300 |          ; vis_to_stack:
+  --:- |  400 |          ; vis_aux_stack:
+   0:0 | 8000 |          ; start:
+   0:0 | 8000 | 68 ff    ; mov # 0xFF, sp
+   2:0 | 8002 | 78 01    ; outmode text
+   4:0 | 8004 |          ; .init_stacks:
+   4:0 | 8004 | 08 00    ; mov # 0x00, a
+   6:0 | 8006 | 28 03    ; mov a, to_sp
+   8:0 | 8008 | 28 04    ; mov a, aux_sp
+   a:0 | 800a | 48 00    ; mov # 0x00, x
+   c:0 | 800c |          ; ..reset_stacks:
+   c:0 | 800c | 1a 02    ; mov a, (vis_from_stack, x)
+   e:0 | 800e | 1a 03    ; mov a, (vis_to_stack, x)
+  10:0 | 8010 | 1a 04    ; mov a, (vis_aux_stack, x)
+  12:0 | 8012 | 52       ; swap a, x
+  13:0 | 8013 | 02 24 01 ; add # 0x01, a
+  16:0 | 8016 | 52       ; swap a, x
+  17:0 | 8017 | 3c 0c 80 ; jnc ..reset_stacks
+  1a:0 | 801a | 48 00    ; mov # 0x00, x
+  1c:0 | 801c | 08 0c    ; mov # DISC_COUNT, a
+  1e:0 | 801e |          ; ..init_from_stack_loop:
+  1e:0 | 801e | 1a 02    ; mov a, (vis_from_stack, x)
+  20:0 | 8020 | 2f       ; inc x
+  21:0 | 8021 | 03 24 fe ; sub # 0x01, a
+  24:0 | 8024 | 5c 1e 80 ; jnz ..init_from_stack_loop
+  27:0 | 8027 | 59 02 00 ; mov x, from_sp
+  2a:0 | 802a | 74 1b 74 5b 74 3f 74 32 74 35 74 6c ; ANSI_CURSOR_HIDE
+  36:0 | 8036 | 74 1b 74 5b 74 32 74 4a ; ANSI_CLEAR_SCREEN
+  3e:0 | 803e | 0c 8e 80 ; jsr visualize
+  41:0 | 8041 | 08 51    ; mov # (3 * (MARGIN_WIDTH + DISC_COUNT + ;*rod*;1 + DISC_COUNT + MARGIN_WIDTH)), a
+  43:0 | 8043 |          ; .rod_bottom_loop:
+  43:0 | 8043 | 74 58    ; out # BOTTOM_LINE_CHAR
+  45:0 | 8045 | 03 24 fe ; sub # 0x01, a
+  48:0 | 8048 | 5c 43 80 ; jnz .rod_bottom_loop
+  4b:0 | 804b | 74 0a    ; out # "\n"
+  4d:0 | 804d |          ; .rod_names:
+  4d:0 | 804d | 08 0d    ; mov # (MARGIN_WIDTH + DISC_COUNT), a
+  4f:0 | 804f |          ; ..bottom_line_1_loop:
+  4f:0 | 804f | 74 20    ; out # BLANK_CHAR
+  51:0 | 8051 | 03 24 fe ; sub # 0x01, a
+  54:0 | 8054 | 5c 4f 80 ; jnz ..bottom_line_1_loop
+  57:0 | 8057 | 74 41    ; out # FROM_ROD_NAME
+  59:0 | 8059 | 08 1a    ; mov # (2 * (MARGIN_WIDTH + DISC_COUNT)), a
+  5b:0 | 805b |          ; ..bottom_line_2_loop:
+  5b:0 | 805b | 74 20    ; out # BLANK_CHAR
+  5d:0 | 805d | 03 24 fe ; sub # 0x01, a
+  60:0 | 8060 | 5c 5b 80 ; jnz ..bottom_line_2_loop
+  63:0 | 8063 | 74 42    ; out # AUX_ROD_NAME
+  65:0 | 8065 | 08 1a    ; mov # (2 * (MARGIN_WIDTH + DISC_COUNT)), a
+  67:0 | 8067 |          ; ..bottom_line_3_loop:
+  67:0 | 8067 | 74 20    ; out # BLANK_CHAR
+  69:0 | 8069 | 03 24 fe ; sub # 0x01, a
+  6c:0 | 806c | 5c 67 80 ; jnz ..bottom_line_3_loop
+  6f:0 | 806f | 74 43    ; out # TO_ROD_NAME
+  71:0 | 8071 | 58 0c    ; push # DISC_COUNT
+  73:0 | 8073 | 58 02    ; push # (vis_from_stack >> 8)
+  75:0 | 8075 | 58 03    ; push # (vis_to_stack >> 8)
+  77:0 | 8077 | 58 04    ; push # (vis_aux_stack >> 8)
+  79:0 | 8079 | 0c f2 81 ; jsr hanoi_recursive
+  7c:0 | 807c | 3f       ; pop
+  7d:0 | 807d | 3f       ; pop
+  7e:0 | 807e | 3f       ; pop
+  7f:0 | 807f | 74 0a    ; out # "\n"
+  81:0 | 8081 | 74 1b 74 5b 74 3f 74 32 74 35 74 68 ; ANSI_CURSOR_SHOW
+  8d:0 | 808d |          ; .halt:
+  8d:0 | 808d | 01       ; hlt
+  8e:0 | 808e |          ; visualize:
+  8e:0 | 808e | 74 1b 74 5b 74 48 ; ANSI_CURSOR_HOME
+  94:0 | 8094 | 74 0a    ; out # "\n"
+  96:0 | 8096 | 08 0d    ; mov # (MARGIN_WIDTH + DISC_COUNT), a
+  98:0 | 8098 |          ; .top_line_1_loop:
+  98:0 | 8098 | 74 20    ; out # BLANK_CHAR
+  9a:0 | 809a | 03 24 fe ; sub # 0x01, a
+  9d:0 | 809d | 5c 98 80 ; jnz .top_line_1_loop
+  a0:0 | 80a0 | 74 7c    ; out # ROD_CHAR
+  a2:0 | 80a2 | 08 1a    ; mov # (2 * (MARGIN_WIDTH + DISC_COUNT)), a
+  a4:0 | 80a4 |          ; .top_line_2_loop:
+  a4:0 | 80a4 | 74 20    ; out # BLANK_CHAR
+  a6:0 | 80a6 | 03 24 fe ; sub # 0x01, a
+  a9:0 | 80a9 | 5c a4 80 ; jnz .top_line_2_loop
+  ac:0 | 80ac | 74 7c    ; out # ROD_CHAR
+  ae:0 | 80ae | 08 1a    ; mov # (2 * (MARGIN_WIDTH + DISC_COUNT)), a
+  b0:0 | 80b0 |          ; .top_line_3_loop:
+  b0:0 | 80b0 | 74 20    ; out # BLANK_CHAR
+  b2:0 | 80b2 | 03 24 fe ; sub # 0x01, a
+  b5:0 | 80b5 | 5c b0 80 ; jnz .top_line_3_loop
+  b8:0 | 80b8 | 74 7c    ; out # ROD_CHAR
+  ba:0 | 80ba | 74 0a    ; out # "\n"
+  bc:0 | 80bc | 74 1b 74 5b 74 33 74 31 74 6d ; ANSI_RED
+  c6:0 | 80c6 | 48 0b    ; mov # (DISC_COUNT - 1), x
+  c8:0 | 80c8 |          ; .row_loop:
+  c8:0 | 80c8 | 0a 02    ; mov (vis_from_stack, x), a
+  ca:0 | 80ca | 28 01    ; mov a, fill_tiles
+  cc:0 | 80cc | 08 0d    ; mov # (DISC_COUNT + MARGIN_WIDTH), a
+  ce:0 | 80ce | 03 14 01 ; sub fill_tiles, a
+  d1:0 | 80d1 | 28 00    ; mov a, blank_tiles
+  d3:0 | 80d3 | 03 24 fe ; sub # 0x01, a
+  d6:0 | 80d6 | 3c e1 80 ; jnc ..end_from_blank_1_loop
+  d9:0 | 80d9 |          ; ..from_blank_1_loop:
+  d9:0 | 80d9 | 74 20    ; out # BLANK_CHAR
+  db:0 | 80db | 03 24 fe ; sub # 0x01, a
+  de:0 | 80de | 2c d9 80 ; jc ..from_blank_1_loop
+  e1:0 | 80e1 |          ; ..end_from_blank_1_loop:
+  e1:0 | 80e1 | 18 01    ; mov fill_tiles, a
+  e3:0 | 80e3 | 03 24 fe ; sub # 0x01, a
+  e6:0 | 80e6 | 3c f1 80 ; jnc ..end_from_fill_1_loop
+  e9:0 | 80e9 |          ; ..from_fill_1_loop:
+  e9:0 | 80e9 | 74 23    ; out # FILL_CHAR
+  eb:0 | 80eb | 03 24 fe ; sub # 0x01, a
+  ee:0 | 80ee | 2c e9 80 ; jc ..from_fill_1_loop
+  f1:0 | 80f1 |          ; ..end_from_fill_1_loop:
+  f1:0 | 80f1 | 74 1b 74 5b 74 30 74 6d ; ANSI_RESET_COLOR
+  f9:0 | 80f9 | 74 7c    ; out # ROD_CHAR
+  fb:0 | 80fb | 74 1b 74 5b 74 33 74 31 74 6d ; ANSI_RED
+ 105:0 | 8105 | 18 01    ; mov fill_tiles, a
+ 107:0 | 8107 | 03 24 fe ; sub # 0x01, a
+ 10a:0 | 810a | 3c 15 81 ; jnc ..end_from_fill_2_loop
+ 10d:0 | 810d |          ; ..from_fill_2_loop:
+ 10d:0 | 810d | 74 23    ; out # FILL_CHAR
+ 10f:0 | 810f | 03 24 fe ; sub # 0x01, a
+ 112:0 | 8112 | 2c 0d 81 ; jc ..from_fill_2_loop
+ 115:0 | 8115 |          ; ..end_from_fill_2_loop:
+ 115:0 | 8115 | 18 00    ; mov blank_tiles, a
+ 117:0 | 8117 | 03 24 fe ; sub # 0x01, a
+ 11a:0 | 811a | 3c 25 81 ; jnc ..end_from_blank_2_loop
+ 11d:0 | 811d |          ; ..from_blank_2_loop:
+ 11d:0 | 811d | 74 20    ; out # BLANK_CHAR
+ 11f:0 | 811f | 03 24 fe ; sub # 0x01, a
+ 122:0 | 8122 | 2c 1d 81 ; jc ..from_blank_2_loop
+ 125:0 | 8125 |          ; ..end_from_blank_2_loop:
+ 125:0 | 8125 | 0a 04    ; mov (vis_aux_stack, x), a
+ 127:0 | 8127 | 28 01    ; mov a, fill_tiles
+ 129:0 | 8129 | 08 0d    ; mov # (DISC_COUNT + MARGIN_WIDTH), a
+ 12b:0 | 812b | 03 14 01 ; sub fill_tiles, a
+ 12e:0 | 812e | 28 00    ; mov a, blank_tiles
+ 130:0 | 8130 | 03 24 fe ; sub # 0x01, a
+ 133:0 | 8133 | 3c 3e 81 ; jnc ..end_aux_blank_1_loop
+ 136:0 | 8136 |          ; ..aux_blank_1_loop:
+ 136:0 | 8136 | 74 20    ; out # BLANK_CHAR
+ 138:0 | 8138 | 03 24 fe ; sub # 0x01, a
+ 13b:0 | 813b | 2c 36 81 ; jc ..aux_blank_1_loop
+ 13e:0 | 813e |          ; ..end_aux_blank_1_loop:
+ 13e:0 | 813e | 18 01    ; mov fill_tiles, a
+ 140:0 | 8140 | 03 24 fe ; sub # 0x01, a
+ 143:0 | 8143 | 3c 4e 81 ; jnc ..end_aux_fill_1_loop
+ 146:0 | 8146 |          ; ..aux_fill_1_loop:
+ 146:0 | 8146 | 74 23    ; out # FILL_CHAR
+ 148:0 | 8148 | 03 24 fe ; sub # 0x01, a
+ 14b:0 | 814b | 2c 46 81 ; jc ..aux_fill_1_loop
+ 14e:0 | 814e |          ; ..end_aux_fill_1_loop:
+ 14e:0 | 814e | 74 1b 74 5b 74 30 74 6d ; ANSI_RESET_COLOR
+ 156:0 | 8156 | 74 7c    ; out # ROD_CHAR
+ 158:0 | 8158 | 74 1b 74 5b 74 33 74 31 74 6d ; ANSI_RED
+ 162:0 | 8162 | 18 01    ; mov fill_tiles, a
+ 164:0 | 8164 | 03 24 fe ; sub # 0x01, a
+ 167:0 | 8167 | 3c 72 81 ; jnc ..end_aux_fill_2_loop
+ 16a:0 | 816a |          ; ..aux_fill_2_loop:
+ 16a:0 | 816a | 74 23    ; out # FILL_CHAR
+ 16c:0 | 816c | 03 24 fe ; sub # 0x01, a
+ 16f:0 | 816f | 2c 6a 81 ; jc ..aux_fill_2_loop
+ 172:0 | 8172 |          ; ..end_aux_fill_2_loop:
+ 172:0 | 8172 | 18 00    ; mov blank_tiles, a
+ 174:0 | 8174 | 03 24 fe ; sub # 0x01, a
+ 177:0 | 8177 | 3c 82 81 ; jnc ..end_aux_blank_2_loop
+ 17a:0 | 817a |          ; ..aux_blank_2_loop:
+ 17a:0 | 817a | 74 20    ; out # BLANK_CHAR
+ 17c:0 | 817c | 03 24 fe ; sub # 0x01, a
+ 17f:0 | 817f | 2c 7a 81 ; jc ..aux_blank_2_loop
+ 182:0 | 8182 |          ; ..end_aux_blank_2_loop:
+ 182:0 | 8182 | 0a 03    ; mov (vis_to_stack, x), a
+ 184:0 | 8184 | 28 01    ; mov a, fill_tiles
+ 186:0 | 8186 | 08 0d    ; mov # (DISC_COUNT + MARGIN_WIDTH), a
+ 188:0 | 8188 | 03 14 01 ; sub fill_tiles, a
+ 18b:0 | 818b | 28 00    ; mov a, blank_tiles
+ 18d:0 | 818d | 03 24 fe ; sub # 0x01, a
+ 190:0 | 8190 | 3c 9b 81 ; jnc ..end_to_blank_1_loop
+ 193:0 | 8193 |          ; ..to_blank_1_loop:
+ 193:0 | 8193 | 74 20    ; out # BLANK_CHAR
+ 195:0 | 8195 | 03 24 fe ; sub # 0x01, a
+ 198:0 | 8198 | 2c 93 81 ; jc ..to_blank_1_loop
+ 19b:0 | 819b |          ; ..end_to_blank_1_loop:
+ 19b:0 | 819b | 18 01    ; mov fill_tiles, a
+ 19d:0 | 819d | 03 24 fe ; sub # 0x01, a
+ 1a0:0 | 81a0 | 3c ab 81 ; jnc ..end_to_fill_1_loop
+ 1a3:0 | 81a3 |          ; ..to_fill_1_loop:
+ 1a3:0 | 81a3 | 74 23    ; out # FILL_CHAR
+ 1a5:0 | 81a5 | 03 24 fe ; sub # 0x01, a
+ 1a8:0 | 81a8 | 2c a3 81 ; jc ..to_fill_1_loop
+ 1ab:0 | 81ab |          ; ..end_to_fill_1_loop:
+ 1ab:0 | 81ab | 74 1b 74 5b 74 30 74 6d ; ANSI_RESET_COLOR
+ 1b3:0 | 81b3 | 74 7c    ; out # ROD_CHAR
+ 1b5:0 | 81b5 | 74 1b 74 5b 74 33 74 31 74 6d ; ANSI_RED
+ 1bf:0 | 81bf | 18 01    ; mov fill_tiles, a
+ 1c1:0 | 81c1 | 03 24 fe ; sub # 0x01, a
+ 1c4:0 | 81c4 | 3c cf 81 ; jnc ..end_to_fill_2_loop
+ 1c7:0 | 81c7 |          ; ..to_fill_2_loop:
+ 1c7:0 | 81c7 | 74 23    ; out # FILL_CHAR
+ 1c9:0 | 81c9 | 03 24 fe ; sub # 0x01, a
+ 1cc:0 | 81cc | 2c c7 81 ; jc ..to_fill_2_loop
+ 1cf:0 | 81cf |          ; ..end_to_fill_2_loop:
+ 1cf:0 | 81cf | 18 00    ; mov blank_tiles, a
+ 1d1:0 | 81d1 | 03 24 fe ; sub # 0x01, a
+ 1d4:0 | 81d4 | 3c df 81 ; jnc ..end_to_blank_2_loop
+ 1d7:0 | 81d7 |          ; ..to_blank_2_loop:
+ 1d7:0 | 81d7 | 74 20    ; out # BLANK_CHAR
+ 1d9:0 | 81d9 | 03 24 fe ; sub # 0x01, a
+ 1dc:0 | 81dc | 2c d7 81 ; jc ..to_blank_2_loop
+ 1df:0 | 81df |          ; ..end_to_blank_2_loop:
+ 1df:0 | 81df | 74 0a    ; out # "\n"
+ 1e1:0 | 81e1 | 13       ; mov x, a
+ 1e2:0 | 81e2 | 03 24 fe ; sub # 0x01, a
+ 1e5:0 | 81e5 | 12       ; mov a, x
+ 1e6:0 | 81e6 | 2c c8 80 ; jc .row_loop
+ 1e9:0 | 81e9 |          ; .end_row_loop:
+ 1e9:0 | 81e9 | 74 1b 74 5b 74 30 74 6d ; ANSI_RESET_COLOR
+ 1f1:0 | 81f1 | 5b       ; rts
+ 1f2:0 | 81f2 |          ; hanoi_recursive:
+ 1f2:0 | 81f2 | 3f       ; pop
+ 1f3:0 | 81f3 | 3f       ; pop
+ 1f4:0 | 81f4 | 4f       ; pop a
+ 1f5:0 | 81f5 | 28 07    ; mov a, aux
+ 1f7:0 | 81f7 | 4f       ; pop a
+ 1f8:0 | 81f8 | 28 06    ; mov a, to
+ 1fa:0 | 81fa | 4f       ; pop a
+ 1fb:0 | 81fb | 28 05    ; mov a, from
+ 1fd:0 | 81fd | 4f       ; pop a
+ 1fe:0 | 81fe | 03 24 fe ; sub # 0x01, a
+ 201:0 | 8201 | 3c 57 82 ; jnc .return
+ 204:0 | 8204 | 12       ; mov a, x
+ 205:0 | 8205 | 21       ; mov sp, a
+ 206:0 | 8206 | 03 24 f9 ; sub # 0x06, a
+ 209:0 | 8209 | 20       ; mov a, sp
+ 20a:0 | 820a | 6e       ; push x
+ 20b:0 | 820b | 18 05    ; mov from, a
+ 20d:0 | 820d | 4e       ; push a
+ 20e:0 | 820e | 18 07    ; mov aux, a
+ 210:0 | 8210 | 4e       ; push a
+ 211:0 | 8211 | 18 06    ; mov to, a
+ 213:0 | 8213 | 4e       ; push a
+ 214:0 | 8214 | 0c f2 81 ; jsr hanoi_recursive
+ 217:0 | 8217 | 21       ; mov sp, a
+ 218:0 | 8218 | 02 24 06 ; add # 0x6, a
+ 21b:0 | 821b | 20       ; mov a, sp
+ 21c:0 | 821c | 6f       ; pop x
+ 21d:0 | 821d | 3f       ; pop
+ 21e:0 | 821e | 3f       ; pop
+ 21f:0 | 821f | 4f       ; pop a
+ 220:0 | 8220 | 03 24 fe ; sub # 0x01, a
+ 223:0 | 8223 | 4e       ; push a
+ 224:0 | 8224 | 3e       ; push
+ 225:0 | 8225 | 4f       ; pop a
+ 226:0 | 8226 | 6e       ; push x
+ 227:0 | 8227 | 3e       ; push
+ 228:0 | 8228 | 5f       ; pop b
+ 229:0 | 8229 | 3e       ; push
+ 22a:0 | 822a | 4e       ; push a
+ 22b:0 | 822b | 29 06 00 ; mov b, to
+ 22e:0 | 822e |          ; .update_stacks:
+ 22e:0 | 822e | 12       ; mov a, x
+ 22f:0 | 822f | 0a 00    ; mov (0x00, x), a
+ 231:0 | 8231 | 03 24 fe ; sub # 0x01, a
+ 234:0 | 8234 | 1a 00    ; mov a, (0x00, x)
+ 236:0 | 8236 | 10       ; mov a, b
+ 237:0 | 8237 | 0b       ; mov (x,b), a
+ 238:0 | 8238 | 28 05    ; mov a, from
+ 23a:0 | 823a | 08 00    ; mov # 0x00, a
+ 23c:0 | 823c | 1b       ; mov a, (x,b)
+ 23d:0 | 823d | 49 06 00 ; mov to, x
+ 240:0 | 8240 | 0a 00    ; mov (0x00, x), a
+ 242:0 | 8242 | 28 07    ; mov a, aux
+ 244:0 | 8244 | 10       ; mov a, b
+ 245:0 | 8245 | 18 05    ; mov from, a
+ 247:0 | 8247 | 1b       ; mov a, (x,b)
+ 248:0 | 8248 | 18 07    ; mov aux, a
+ 24a:0 | 824a | 02 24 01 ; add # 0x01, a
+ 24d:0 | 824d | 1a 00    ; mov a, (0x00, x)
+ 24f:0 | 824f | 3e       ; push
+ 250:0 | 8250 | 3e       ; push
+ 251:0 | 8251 | 0c 8e 80 ; jsr visualize
+ 254:0 | 8254 | 1c f2 81 ; jmp hanoi_recursive
+ 257:0 | 8257 |          ; .return:
+ 257:0 | 8257 | 21       ; mov sp, a
+ 258:0 | 8258 | 03 24 f9 ; sub # 0x06, a
+ 25b:0 | 825b | 20       ; mov a, sp
+ 25c:0 | 825c | 5b       ; rts

@@ -1,0 +1,17 @@
+  outp | addr | data
+
+   0:0 | 8000 |          ; start:
+   0:0 | 8000 | 78 01    ; outmode text
+   2:0 | 8002 | 48 00    ; mov # 0x00, x
+   4:0 | 8004 |          ; .loop:
+   4:0 | 8004 | 0a 81    ; mov (string, x), a
+   6:0 | 8006 | 54 00    ; or # 0x00, a
+   8:0 | 8008 | 4c 10 80 ; jz .halt
+   b:0 | 800b | 71       ; out a
+   c:0 | 800c | 2f       ; inc x
+   d:0 | 800d | 1c 04 80 ; jmp .loop
+  10:0 | 8010 |          ; .halt:
+  10:0 | 8010 | 01       ; hlt
+ 100:0 | 8100 |          ; string:
+ 100:0 | 8100 | 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 00 ; #d ascii("Hello, world!\0")
+ 10e:0 | 810e |          ; .end:

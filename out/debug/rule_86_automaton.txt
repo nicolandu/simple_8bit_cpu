@@ -1,0 +1,88 @@
+ outp | addr | data
+
+ --:- |    0 |          ; gen_countdown:
+ --:- |    2 |          ; temp_sp:
+ --:- |  200 |          ; cell_array:
+ --:- |  300 |          ; cell_array_end:
+  0:0 | 8000 |          ; start:
+  0:0 | 8000 |          ; .reset:
+  0:0 | 8000 | 68 ff    ; mov # 0xFF, sp
+  2:0 | 8002 | 78 01    ; outmode text
+  4:0 | 8004 | 08 7e    ; mov # (MAX_GENERATIONS)`8, a
+  6:0 | 8006 | 28 00    ; mov a, gen_countdown
+  8:0 | 8008 | 08 00    ; mov # (MAX_GENERATIONS >> 8), a
+  a:0 | 800a | 28 01    ; mov a, (gen_countdown + 1)
+  c:0 | 800c |          ; .reset_array:
+  c:0 | 800c | 38 01    ; mov # (cell_array + 1)`8, b
+  e:0 | 800e | 48 02    ; mov # ((cell_array + 1) >> 8), x
+ 10:0 | 8010 |          ; ..write_outer_loop:
+ 10:0 | 8010 | 08 00    ; mov # 0x00, a
+ 12:0 | 8012 |          ; ...write_inner_loop:
+ 12:0 | 8012 | 1b       ; mov a, (x, b)
+ 13:0 | 8013 | 03       ; sec
+ 14:0 | 8014 | 34 00    ; addc # 0x00, b
+ 16:0 | 8016 | 3c 12 80 ; jnc ...write_inner_loop
+ 19:0 | 8019 | 61       ; swap b, x
+ 1a:0 | 801a | 34 00    ; addc # 0x00, b
+ 1c:0 | 801c | 08 7f    ; mov # 0x7F, a
+ 1e:0 | 801e | 03 41    ; cmp b, a
+ 20:0 | 8020 | 61       ; swap b, x
+ 21:0 | 8021 | 2c 10 80 ; jc ..write_outer_loop
+ 24:0 | 8024 |          ; .initialize_array:
+ 24:0 | 8024 | 08 01    ; mov # 0x01, a
+ 26:0 | 8026 | 19 ff 02 ; mov a, (cell_array_end - 1)
+ 29:0 | 8029 |          ; .next_gen:
+ 29:0 | 8029 | 58 02    ; push # (cell_array >> 8)
+ 2b:0 | 802b | 58 00    ; push # cell_array`8
+ 2d:0 | 802d | 58 02    ; push # ((cell_array + 1) >> 8)
+ 2f:0 | 802f | 58 01    ; push # (cell_array + 1)`8
+ 31:0 | 8031 |          ; ..loop:
+ 31:0 | 8031 | 5f       ; pop b
+ 32:0 | 8032 | 02 34 01 ; add # 0x01, b
+ 35:0 | 8035 | 22       ; mov b, x
+ 36:0 | 8036 | 5f       ; pop b
+ 37:0 | 8037 | 34 00    ; addc # 0x00, b
+ 39:0 | 8039 | 08 03    ; mov # (cell_array_end >> 8), a
+ 3b:0 | 803b | 03 41    ; cmp b, a
+ 3d:0 | 803d | 4c 69 80 ; jz ..end_generation
+ 40:0 | 8040 | 3e       ; push
+ 41:0 | 8041 | 3e       ; push
+ 42:0 | 8042 | 5e       ; push b
+ 43:0 | 8043 | 6e       ; push x
+ 44:0 | 8044 | 61       ; swap b, x
+ 45:0 | 8045 | 0b       ; mov (x,b), a
+ 46:0 | 8046 | 54 00    ; or # 0x00, a
+ 48:0 | 8048 | 4c 64 80 ; jz ...if_zero
+ 4b:0 | 804b | 21       ; mov sp, a
+ 4c:0 | 804c | 28 02    ; mov a, temp_sp
+ 4e:0 | 804e | 3f       ; pop
+ 4f:0 | 804f | 3f       ; pop
+ 50:0 | 8050 | 5f       ; pop b
+ 51:0 | 8051 | 6f       ; pop x
+ 52:0 | 8052 | 08 01    ; mov # 0x01, a
+ 54:0 | 8054 | 1b       ; mov a, (x, b)
+ 55:0 | 8055 | 5f       ; pop b
+ 56:0 | 8056 | 6f       ; pop x
+ 57:0 | 8057 | 5e       ; push b
+ 58:0 | 8058 | 03 17    ; sub (x, b), a
+ 5a:0 | 805a | 5f       ; pop b
+ 5b:0 | 805b | 1b       ; mov a, (x, b)
+ 5c:0 | 805c | 18 02    ; mov temp_sp, a
+ 5e:0 | 805e | 20       ; mov a, sp
+ 5f:0 | 805f | 74 58    ; out # "X"
+ 61:0 | 8061 | 1c 31 80 ; jmp ..loop
+ 64:0 | 8064 |          ; ...if_zero:
+ 64:0 | 8064 | 74 2e    ; out # "."
+ 66:0 | 8066 | 1c 31 80 ; jmp ..loop
+ 69:0 | 8069 |          ; ..end_generation:
+ 69:0 | 8069 | 74 0a    ; out # "\n"
+ 6b:0 | 806b | 18 00    ; mov gen_countdown, a
+ 6d:0 | 806d | 03 24 fe ; sub # 0x01, a
+ 70:0 | 8070 | 28 00    ; mov a, gen_countdown
+ 72:0 | 8072 | 2c 29 80 ; jc .next_gen
+ 75:0 | 8075 | 18 01    ; mov (gen_countdown + 1), a
+ 77:0 | 8077 | 24 ff    ; subc # 0x00, a
+ 79:0 | 8079 | 28 01    ; mov a, (gen_countdown + 1)
+ 7b:0 | 807b | 2c 29 80 ; jc .next_gen
+ 7e:0 | 807e |          ; .halt:
+ 7e:0 | 807e | 01       ; hlt

@@ -1,0 +1,58 @@
+ outp | addr | data
+
+ --:- |    0 |             ; dividend:
+ --:- |    2 |             ; divisor:
+ --:- |    4 |             ; quotient:
+ --:- |    6 |             ; remainder:
+  0:0 | 8000 |             ; start:
+  0:0 | 8000 | 68 ff       ; mov # 0xFF, sp
+  2:0 | 8002 | 08 9b       ; mov # (DIVIDEND & 0xFF), a
+  4:0 | 8004 | 28 00       ; mov a, (dividend)
+  6:0 | 8006 | 08 57       ; mov # (DIVIDEND >> 8), a
+  8:0 | 8008 | 28 01       ; mov a, (dividend+1)
+  a:0 | 800a | 08 46       ; mov # (DIVISOR & 0xFF), a
+  c:0 | 800c | 28 02       ; mov a, (divisor)
+  e:0 | 800e | 08 02       ; mov # (DIVISOR >> 8), a
+ 10:0 | 8010 | 28 03       ; mov a, (divisor+1)
+ 12:0 | 8012 | 0c 22 80    ; jsr divide_16x16to16
+ 15:0 | 8015 | 75 05 00    ; out (quotient+1)
+ 18:0 | 8018 | 75 04 00    ; out quotient
+ 1b:0 | 801b | 75 07 00    ; out (remainder+1)
+ 1e:0 | 801e | 75 06 00    ; out remainder
+ 21:0 | 8021 | 01          ; hlt
+ 22:0 | 8022 |             ; divide_16x16to16:
+ 22:0 | 8022 | 08 00       ; mov # 0x00, a
+ 24:0 | 8024 | 28 06       ; mov a, remainder
+ 26:0 | 8026 | 28 07       ; mov a, (remainder+1)
+ 28:0 | 8028 | 48 10       ; mov # 0x10, x
+ 2a:0 | 802a |             ; .divloop:
+ 2a:0 | 802a | 05 00 00    ; rolc dividend
+ 2d:0 | 802d | 05 01 00    ; rolc (dividend+1)
+ 30:0 | 8030 | 05 06 00    ; rolc remainder
+ 33:0 | 8033 | 05 07 00    ; rolc (remainder+1)
+ 36:0 | 8036 | 18 07       ; mov (remainder+1), a
+ 38:0 | 8038 | 03 45 03 00 ; cmp (divisor+1), a
+ 3c:0 | 803c | 3c 61 80    ; jnc ..shift_quotient_0
+ 3f:0 | 803f | 5c 4b 80    ; jnz ..subtract_divisor
+ 42:0 | 8042 | 18 06       ; mov remainder, a
+ 44:0 | 8044 | 03 45 02 00 ; cmp divisor, a
+ 48:0 | 8048 | 3c 61 80    ; jnc ..shift_quotient_0
+ 4b:0 | 804b |             ; ..subtract_divisor:
+ 4b:0 | 804b | 18 06       ; mov remainder, a
+ 4d:0 | 804d | 03 15 02 00 ; sub divisor, a
+ 51:0 | 8051 | 28 06       ; mov a, remainder
+ 53:0 | 8053 | 18 07       ; mov (remainder+1), a
+ 55:0 | 8055 | 15 03 00    ; subc (divisor+1), a
+ 58:0 | 8058 | 28 07       ; mov a, (remainder+1)
+ 5a:0 | 805a |             ; ..shift_quotient_1:
+ 5a:0 | 805a | 03 05 04 00 ; rol quotient, 1
+ 5e:0 | 805e | 1c 65 80    ; jmp ..shift_quotient_msb
+ 61:0 | 8061 |             ; ..shift_quotient_0:
+ 61:0 | 8061 | 02 05 04 00 ; rol quotient, 0
+ 65:0 | 8065 |             ; ..shift_quotient_msb:
+ 65:0 | 8065 | 05 05 00    ; rolc (quotient+1)
+ 68:0 | 8068 | 13          ; mov x, a
+ 69:0 | 8069 | 03 24 fe    ; sub # 0x01, a
+ 6c:0 | 806c | 12          ; mov a, x
+ 6d:0 | 806d | 5c 2a 80    ; jnz .divloop
+ 70:0 | 8070 | 5b          ; rts
