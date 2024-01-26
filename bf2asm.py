@@ -8,7 +8,7 @@ OUT_FILE_PATTERN = R'{}.asm'
 OPEN_BRACE_LABEL = 'brace_open_{level:02}_{number:03}'
 CLOSE_BRACE_LABEL = 'brace_close_{level:02}_{number:03}'
 
-LABEL_LINE_ENDING = ':\n\n'
+LABEL_LINE_ENDING = ':\n'
 
 JUMP_ADDR_FORMAT = '#d16 le({}`16)\n'
 
