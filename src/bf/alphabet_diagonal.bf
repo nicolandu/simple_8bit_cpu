@@ -2,31 +2,31 @@
 
 [
 	>
-	++
-	>
-	+++++
-	>
-	+++++++
-	<<<
-	-
+    ++
+    >
+    +++++
+    >
+    +++++++
+    <<<
+    -
 ] // *0* 26 65 91
 
 > goto outer loop counter: a
 
 [ // main loop
-	
-	
+
+ 	
 	// b *a* 65 91
 	
-	[ // move a 3 cells after 91
-		>>>>>
-		+
-		<<<<<
-		-
-	] // b *0* 65 91 0 0 a
-	
-	>>>>>
-	
+    [ // move a 3 cells after 91
+        >>>>>
+        +
+        <<<<<
+        <-
+    ] // b *0* 65 91 0 0 a
+
+    >>>>>
+    
 	[ // copy a to original position; temp_a; and temp_a2
 		<<<<<
 		+
@@ -65,7 +65,7 @@
 		<<<<<
 		-
 	] // *0* a 65 91 0 b
-	
+
 	>>>>>
 	
 	[ // move b to original position and temp_b
